@@ -1,0 +1,2 @@
+node_address: http://127.0.0.1:8545
+contract_address: 0x31a04aa2DE36A0ade8f2105187ab9bF9804Ae7E1
