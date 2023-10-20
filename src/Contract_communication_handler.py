@@ -1,5 +1,6 @@
 from web3 import Web3, HTTPProvider
 import json
+import time
 
 class Contract_communication_handler:
 	
@@ -69,7 +70,7 @@ class Contract_communication_handler:
 
 	def participate(self):
 		try:
-			self.contract.functions.participate().transact({'from': self.wallet_address})
+			self.last_transaction = self.contract.functions.participate().transact({'from': self.wallet_address})
 		except:
 			exit('Error while calling function "participate".')
 	
@@ -78,3 +79,31 @@ class Contract_communication_handler:
 			return self.contract.functions.get_my_turn_index().call({'from': self.wallet_address})
 		except:
 			exit('Error while calling function "get_my_turn_index".')
+
+	def catch_event(self, status, turn_index):
+
+		# check if my last transaction triggered the event
+		transaction = self.connection.eth.get_transaction(self.last_transaction)
+		block_number = transaction['blockNumber']
+		logs = self.contract.events.update.get_logs(fromBlock=block_number)
+		if len(logs) >= 1:
+			s = logs[-1]['args']['s']
+			i = logs[-1]['args']['i']
+
+			print('Past event caught.\nStatus:', s, '\nTurn_index:', i)
+			if s == status and i == turn_index:
+				return
+		
+		# otherwise listen for it
+		event_filter = self.contract.events.update.create_filter(fromBlock='latest')
+
+		while True:
+			for event in event_filter.get_new_entries():
+				s = event['args']['s']
+				i = event['args']['i']
+
+				print('New event caught.\nStatus:', s, '\nTurn_index:', i)
+				if s == status and turn_index == i:
+					return
+				
+			time.sleep(1)

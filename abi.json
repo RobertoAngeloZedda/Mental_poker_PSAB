@@ -5,6 +5,38 @@
 		"type": "constructor"
 	},
 	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "enum Mental_Poker.Status",
+				"name": "s",
+				"type": "uint8"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "i",
+				"type": "uint8"
+			}
+		],
+		"name": "update",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "draw_index",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "get_my_turn_index",
 		"outputs": [
@@ -20,6 +52,13 @@
 	{
 		"inputs": [],
 		"name": "participate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "reset",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"

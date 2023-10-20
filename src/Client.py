@@ -8,3 +8,8 @@ cch = Contract_communication_handler(addresses_file_path='./addresses.txt',
 cch.participate()
 assigned_index = cch.get_my_turn_index()
 print('Assigned index:', assigned_index)
+
+print('Listening for events')
+cch.catch_event(1, 0)
+
+print('Can start shuffling..')

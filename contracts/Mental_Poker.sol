@@ -7,13 +7,23 @@ contract Mental_Poker {
     enum Status {matchmaking, shuffle, reveal_card, deal_card, stake, key_reveal, optimistic_verify, pay_to_verify}
     Status public status;
     uint8 public turn_index;
+    uint8 public draw_index;
     address[] players_addresses;
+
+    event update(Status s, uint8 i);
 
     uint8 MAX_PLAYERS = 2;
 
     constructor() {
         status = Status.matchmaking;
         turn_index = 0;
+    }
+
+    function reset() public {
+        status = Status.matchmaking;
+        turn_index = 0;
+        draw_index = 0;
+        players_addresses = new address[](0);
     }
 
     function participate() public /*payable*/ {
@@ -26,7 +36,7 @@ contract Mental_Poker {
         // If there are enough players game can start
         if (players_addresses.length >= MAX_PLAYERS) {
             status = Status.shuffle;
-            // event
+            emit update(status, turn_index);
         }        
     }
 
