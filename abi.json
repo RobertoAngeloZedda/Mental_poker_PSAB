@@ -9,19 +9,95 @@
 		"inputs": [
 			{
 				"indexed": false,
-				"internalType": "enum Mental_Poker.Status",
-				"name": "s",
+				"internalType": "uint8",
+				"name": "turn_index",
 				"type": "uint8"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint8",
-				"name": "i",
+				"name": "draw_index",
+				"type": "uint8"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "topdeck_index",
+				"type": "uint8"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "hand_size",
 				"type": "uint8"
 			}
 		],
-		"name": "update",
+		"name": "draw_event",
 		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "turn_index",
+				"type": "uint8"
+			}
+		],
+		"name": "shuffle_event",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [],
+		"name": "stake_event",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "lengthB",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "lengthE",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "lengthM",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes",
+				"name": "b",
+				"type": "bytes"
+			},
+			{
+				"internalType": "bytes",
+				"name": "e",
+				"type": "bytes"
+			},
+			{
+				"internalType": "bytes",
+				"name": "m",
+				"type": "bytes"
+			}
+		],
+		"name": "calculateModularExponentiation",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "draw",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"inputs": [],
@@ -31,6 +107,83 @@
 				"internalType": "uint8",
 				"name": "",
 				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getNumerOfParticipants",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "index",
+				"type": "uint256"
+			}
+		],
+		"name": "getPlayer",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint8",
+				"name": "index",
+				"type": "uint8"
+			}
+		],
+		"name": "get_card",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "get_deck_coding",
+		"outputs": [
+			{
+				"internalType": "uint8[]",
+				"name": "",
+				"type": "uint8[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "get_encrypted_deck",
+		"outputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "",
+				"type": "uint256[]"
 			}
 		],
 		"stateMutability": "view",
@@ -51,6 +204,19 @@
 	},
 	{
 		"inputs": [],
+		"name": "get_n",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "participate",
 		"outputs": [],
 		"stateMutability": "nonpayable",
@@ -64,11 +230,73 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "decripted_cards",
+				"type": "uint256[]"
+			}
+		],
+		"name": "reveal_cards",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "_encrypted_deck",
+				"type": "uint256[]"
+			}
+		],
+		"name": "shuffle",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_n",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint8[]",
+				"name": "_deck_coding",
+				"type": "uint8[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "_encrypted_deck",
+				"type": "uint256[]"
+			}
+		],
+		"name": "shuffle_dealer",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "status",
 		"outputs": [
 			{
 				"internalType": "enum Mental_Poker.Status",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "topdeck_index",
+		"outputs": [
+			{
+				"internalType": "uint8",
 				"name": "",
 				"type": "uint8"
 			}
