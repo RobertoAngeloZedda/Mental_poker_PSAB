@@ -20,6 +20,7 @@ contract Mental_Poker {
     event draw_event(uint8 turn_index, uint8 draw_index, uint8 topdeck_index, uint8 hand_size);
     event stake_event();
 
+    uint256 public PARTICIPATION_FEE = 5;
     uint8 MAX_PLAYERS = 2;
     uint8 HAND_SIZE = 5;
 
@@ -40,12 +41,15 @@ contract Mental_Poker {
         players_addresses = new address[](0);
     }
 
-    function participate() public /*payable*/ {
+    function participate() public payable {
         require(status == Status.matchmaking);
+        require(msg.value >= PARTICIPATION_FEE);
+        
+        if (msg.value > PARTICIPATION_FEE) {
+            payable(msg.sender).transfer(msg.value - PARTICIPATION_FEE);
+        }
 
         players_addresses.push(msg.sender);
-
-        // handle payment
 
         // If there are enough players game can start
         if (players_addresses.length >= MAX_PLAYERS) {
@@ -149,7 +153,7 @@ contract Mental_Poker {
         return players_addresses[index];
     }
 
-    function getNumerOfParticipants() public view returns (uint8) {
+    function getNumberOfParticipants() public view returns (uint8) {
         return uint8(players_addresses.length);
     }
 

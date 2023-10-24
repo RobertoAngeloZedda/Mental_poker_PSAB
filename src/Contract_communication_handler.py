@@ -135,9 +135,9 @@ class Contract_communication_handler:
 			print('Error during the transaction.')
 			exit()
 
-	def participate(self):
+	def participate(self, fee):
 		try:
-			self.last_transaction = self.contract.functions.participate().transact({'from': self.wallet_address})
+			self.last_transaction = self.contract.functions.participate().transact({'from': self.wallet_address, 'value': fee})
 		except:
 			exit('Error while calling function "participate".')
 	
