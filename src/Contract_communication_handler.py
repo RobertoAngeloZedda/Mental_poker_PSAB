@@ -124,7 +124,7 @@ class Contract_communication_handler:
 				
 			time.sleep(1)
 
-	def catch_stake_event(self, turn_index):
+	def catch_stake_event(self, turn_index, end_index):
 
 		# check if my last transaction triggered the event
 		transaction = self.connection.eth.get_transaction(self.last_transaction)
@@ -132,15 +132,11 @@ class Contract_communication_handler:
 		logs = self.contract.events.stake_event.get_logs(fromBlock=block_number)
 		if len(logs) >= 1:
 			_turn_index = logs[-1]['args']['turn_index']
-			value = logs[-1]['args']['value']
-			last_raise_index = logs[-1]['args']['last_raise_index']
 
 			print('Past event caught (from block', block_number, ').',
-		          ' {turn_index:', _turn_index,
-		 		  ', value:', value,
-				  ', last_raise_index:', last_raise_index, '}')
-			if _turn_index == turn_index:
-				return value, last_raise_index
+		          ' {turn_index:', _turn_index, '}')
+			if _turn_index == turn_index or _turn_index == end_index:
+				return _turn_index
 		
 		# otherwise listen for it
 		event_filter = self.contract.events.stake_event.create_filter(fromBlock='latest')
@@ -148,18 +144,39 @@ class Contract_communication_handler:
 		while True:
 			for event in event_filter.get_new_entries():
 				_turn_index = event['args']['turn_index']
-				value = event['args']['value']
-				last_raise_index = event['args']['last_raise_index']
 
 				print('New event caught.',
-					  ' {turn_index:', _turn_index,
-					  ', value:', value,
-					  ', last_raise_index:', last_raise_index, '}')
-				if _turn_index == turn_index:
-					return value, last_raise_index
+					  ' {turn_index:', _turn_index, '}')
+				if _turn_index == turn_index or _turn_index == end_index:
+					return _turn_index
 				
 			time.sleep(1)
+	
+	def catch_key_reveal_event(self, turn_index):
 
+		# check if my last transaction triggered the event
+		transaction = self.connection.eth.get_transaction(self.last_transaction)
+		block_number = transaction['blockNumber']
+		logs = self.contract.events.key_reveal_event.get_logs(fromBlock=block_number)
+		if len(logs) >= 1:
+			_turn_index = logs[-1]['args']['turn_index']
+
+			print('Past event caught (from block', block_number, '). {turn_index:', _turn_index, '}')
+			if _turn_index == turn_index:
+				return
+		
+		# otherwise listen for it
+		event_filter = self.contract.events.key_reveal_event.create_filter(fromBlock='latest')
+
+		while True:
+			for event in event_filter.get_new_entries():
+				_turn_index = event['args']['turn_index']
+
+				print('New event caught. {turn_index:', _turn_index, '}')
+				if _turn_index == turn_index:
+					return
+				
+			time.sleep(1)
 
 	def transact(self, wei_amount: int):
 		try:
@@ -249,3 +266,39 @@ class Contract_communication_handler:
 			self.last_transaction = self.contract.functions.fold().transact({'from': self.wallet_address})
 		except:
 			exit('Error while calling function "fold".')
+	
+	def get_last_raise_index(self):
+		try:
+			return self.contract.functions.get_last_raise_index().call({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "get_last_raise_index".')
+	
+	def get_bets(self):
+		try:
+			return self.contract.functions.get_bets().call({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "get_bets".')
+	
+	def get_fold_flags(self):
+		try:
+			return self.contract.functions.get_fold_flags().call({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "get_fold_flags".')
+	
+	def key_reveal(self, e, d):
+		try:
+			return self.contract.functions.key_reveal(e, d).transact({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "key_reveal".')
+		
+	def get_enc_keys(self):
+		try:
+			return self.contract.functions.get_enc_keys().call({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "get_enc_keys_call".')
+		
+	def get_dec_keys(self):
+		try:
+			return self.contract.functions.get_dec_keys().call({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "get_dec_keys_call".')
