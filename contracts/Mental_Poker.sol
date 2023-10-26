@@ -29,6 +29,7 @@ contract Mental_Poker {
     event stake_event(uint8 turn_index, uint8 value, uint8 last_raise_index);
     event key_reveal();
 
+    uint256 public PARTICIPATION_FEE = 5;
     uint8 MAX_PLAYERS = 2;
     uint8 HAND_SIZE = 5;
     uint8 PARTICIPATION_FEE = 5;
@@ -183,6 +184,7 @@ contract Mental_Poker {
         emit stake_event(turn_index, last_raise_value - bets[turn_index], last_raise_index);
     }
 
+<<<<<<< HEAD
     function call() public payable{
         require(status == Status.stake);
         require(msg.sender == players_addresses[turn_index]);
@@ -199,6 +201,10 @@ contract Mental_Poker {
         else {
             emit stake_event(turn_index, last_raise_value - bets[turn_index], last_raise_index);
         }
+=======
+    function getNumberOfParticipants() public view returns (uint8) {
+        return uint8(players_addresses.length);
+>>>>>>> e6434d99c96559f6dbdbc506e963ad45b93bd3e5
     }
 
     function check() public {
