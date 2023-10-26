@@ -124,6 +124,42 @@ class Contract_communication_handler:
 				
 			time.sleep(1)
 
+	def catch_stake_event(self, turn_index):
+
+		# check if my last transaction triggered the event
+		transaction = self.connection.eth.get_transaction(self.last_transaction)
+		block_number = transaction['blockNumber']
+		logs = self.contract.events.stake_event.get_logs(fromBlock=block_number)
+		if len(logs) >= 1:
+			_turn_index = logs[-1]['args']['turn_index']
+			value = logs[-1]['args']['value']
+			last_raise_index = logs[-1]['args']['last_raise_index']
+
+			print('Past event caught (from block', block_number, ').',
+		          ' {turn_index:', _turn_index,
+		 		  ', value:', value,
+				  ', last_raise_index:', last_raise_index, '}')
+			if _turn_index == turn_index:
+				return value, last_raise_index
+		
+		# otherwise listen for it
+		event_filter = self.contract.events.stake_event.create_filter(fromBlock='latest')
+
+		while True:
+			for event in event_filter.get_new_entries():
+				_turn_index = event['args']['turn_index']
+				value = event['args']['value']
+				last_raise_index = event['args']['last_raise_index']
+
+				print('New event caught.',
+					  ' {turn_index:', _turn_index,
+					  ', value:', value,
+					  ', last_raise_index:', last_raise_index, '}')
+				if _turn_index == turn_index:
+					return value, last_raise_index
+				
+			time.sleep(1)
+
 
 	def transact(self, wei_amount: int):
 		try:
@@ -135,9 +171,9 @@ class Contract_communication_handler:
 			print('Error during the transaction.')
 			exit()
 
-	def participate(self):
+	def participate(self, fee):
 		try:
-			self.last_transaction = self.contract.functions.participate().transact({'from': self.wallet_address})
+			self.last_transaction = self.contract.functions.participate().transact({'from': self.wallet_address, 'value': fee})
 		except:
 			exit('Error while calling function "participate".')
 	
@@ -189,3 +225,27 @@ class Contract_communication_handler:
 			self.last_transaction = self.contract.functions.draw().transact({'from': self.wallet_address})
 		except:
 			exit('Error while calling function "draw".')
+	
+	def bet(self, fee):
+		try:
+			self.last_transaction = self.contract.functions.bet().transact({'from': self.wallet_address, 'value': fee})
+		except:
+			exit('Error while calling function "bet".')
+	
+	def call(self, fee):
+		try:
+			self.last_transaction = self.contract.functions.call().transact({'from': self.wallet_address, 'value': fee})
+		except:
+			exit('Error while calling function "call".')
+	
+	def check(self):
+		try:
+			self.last_transaction = self.contract.functions.check().transact({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "check".')
+	
+	def fold(self):
+		try:
+			self.last_transaction = self.contract.functions.fold().transact({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "fold".')

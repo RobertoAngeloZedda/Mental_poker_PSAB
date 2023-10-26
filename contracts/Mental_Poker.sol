@@ -7,8 +7,16 @@ contract Mental_Poker {
     enum Status {matchmaking, shuffle, draw_card, stake, key_reveal, optimistic_verify, pay_to_verify}
     Status public status;
     uint8 public turn_index;
+
+    // Draw phase variables
     uint8 public draw_index;
     uint8 public topdeck_index;
+
+    // Stake phase variables
+    uint8 public last_raise_index;
+    uint8 public last_raise_value;
+    uint8[] bets;
+    bool[] fold_flags;
 
     // Public game infos
     uint256 n;
@@ -18,10 +26,12 @@ contract Mental_Poker {
 
     event shuffle_event(uint8 turn_index);
     event draw_event(uint8 turn_index, uint8 draw_index, uint8 topdeck_index, uint8 hand_size);
-    event stake_event();
+    event stake_event(uint8 turn_index, uint8 value, uint8 last_raise_index);
+    event key_reveal();
 
     uint8 MAX_PLAYERS = 2;
     uint8 HAND_SIZE = 5;
+    uint8 PARTICIPATION_FEE = 5;
 
     bytes output;
 
@@ -30,6 +40,11 @@ contract Mental_Poker {
         turn_index = 0;
         draw_index = 0;
         topdeck_index = 0;
+
+        last_raise_index = 0;
+        last_raise_value = 0;
+        encrypted_deck = new uint8[](MAX_PLAYERS);
+        fold_flags = new bool[](MAX_PLAYERS);
     }
 
     function reset() public {
@@ -38,14 +53,22 @@ contract Mental_Poker {
         draw_index = 0;
         topdeck_index = 0;
         players_addresses = new address[](0);
+
+        last_raise_index = 0;
+        last_raise_value = 0;
+        encrypted_deck = new uint8[](MAX_PLAYERS);
+        fold_flags = new bool[](MAX_PLAYERS);
     }
 
-    function participate() public /*payable*/ {
+    function participate() public payable {
         require(status == Status.matchmaking);
+        require(msg.value >= PARTICIPATION_FEE);
+        
+        if (msg.value > PARTICIPATION_FEE) {
+            payable(msg.sender).transfer(msg.value - PARTICIPATION_FEE);
+        }
 
         players_addresses.push(msg.sender);
-
-        // handle payment
 
         // If there are enough players game can start
         if (players_addresses.length >= MAX_PLAYERS) {
@@ -65,6 +88,10 @@ contract Mental_Poker {
         require(index != players_addresses.length);
 
         return index;
+    }
+
+    function get_number_of_participants() public view returns (uint8) {
+        return uint8(players_addresses.length);
     }
 
     function shuffle_dealer(uint256 _n, uint8[] memory _deck_coding, uint256[] memory _encrypted_deck) public {
@@ -131,7 +158,10 @@ contract Mental_Poker {
 
         draw_index += 1;
         if (draw_index >= MAX_PLAYERS) {
-            emit stake_event();
+            status = Status.stake;
+            last_raise_index = 0;
+            turn_index = 0;
+            emit stake_event(turn_index, 0, last_raise_index);
         }
         else {
             turn_index = (draw_index + 1) % MAX_PLAYERS;
@@ -140,18 +170,74 @@ contract Mental_Poker {
         }
     }
 
+    function bet() public payable {
+        require(status == Status.stake);
+        require(msg.sender == players_addresses[turn_index]);
+        require(msg.value > last_raise_value - bets[turn_index]);
 
+        bets[turn_index] += uint8(msg.value);       //inizializza
+        last_raise_value = uint8(msg.value);
 
-
-
-    function getPlayer(uint256 index) public view returns (address) {
-        require(index < players_addresses.length, "Index out of bounds");
-        return players_addresses[index];
+        last_raise_index = turn_index;
+        turn_index = (turn_index + 1) % MAX_PLAYERS;
+        emit stake_event(turn_index, last_raise_value - bets[turn_index], last_raise_index);
     }
 
-    function getNumerOfParticipants() public view returns (uint8) {
-        return uint8(players_addresses.length);
+    function call() public payable{
+        require(status == Status.stake);
+        require(msg.sender == players_addresses[turn_index]);
+        require(last_raise_value - bets[turn_index] > 0);
+        require(msg.value == last_raise_value - bets[turn_index]);
+
+        bets[turn_index] += uint8(msg.value);
+
+        turn_index = (turn_index + 1) % MAX_PLAYERS;
+        if (turn_index == last_raise_index) {
+            status = Status.key_reveal;
+            emit key_reveal();
+        }
+        else {
+            emit stake_event(turn_index, last_raise_value - bets[turn_index], last_raise_index);
+        }
     }
+
+    function check() public {
+        require(status == Status.stake);
+        require(msg.sender == players_addresses[turn_index]);
+        require(last_raise_value == 0);
+
+        turn_index = (turn_index + 1) % MAX_PLAYERS;
+        if (turn_index == last_raise_index) {
+            status = Status.key_reveal;
+            emit key_reveal();
+        }
+        else {
+            emit stake_event(turn_index, 0, last_raise_index);
+        }
+    }
+
+    function fold() public {
+        require(status == Status.stake);
+        require(msg.sender == players_addresses[turn_index]);
+
+        //fold_flags[turn_index] = true;
+
+        turn_index = (turn_index + 1) % MAX_PLAYERS;
+        if (turn_index == last_raise_index) {
+            status = Status.key_reveal;
+            emit key_reveal();
+        }
+        else {
+            //emit stake_event(turn_index, last_raise_value - bets[turn_index], last_raise_index);   // inizializza 
+            emit stake_event(turn_index, 0, last_raise_index);
+        }
+    }
+
+
+
+
+
+
 
     function calculateModularExponentiation(
         bytes32 lengthB,

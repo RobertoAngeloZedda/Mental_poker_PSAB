@@ -6,7 +6,8 @@ cch = Contract_communication_handler(addresses_file_path='./addresses.txt',
                                      user_wallet_address='0xAC2444B1e48b6024f6d11c2a67584fe706C4FF9B',
                                      user_wallet_password='0x66957c694c0ff3661f6716a5befa7ba2466f159fa2b4a040780dfa263a90e96e')
 
-cch.participate()
+fee = 5
+cch.participate(fee)
 assigned_index = cch.get_my_turn_index()
 print('Assigned index:', assigned_index)
 
@@ -58,21 +59,47 @@ else:
 
     cch.shuffle(enc)
 
-print('Listening for draw events')
-draw_index, topdeck_index, hand_size = cch.catch_draw_event(assigned_index)
+for _ in range(2):
+    print('Listening for draw events')
+    draw_index, topdeck_index, hand_size = cch.catch_draw_event(assigned_index)
 
-deck = cch.get_encrypted_deck()
+    deck = cch.get_encrypted_deck()
 
-encrypted_hand = deck[topdeck_index : (topdeck_index + hand_size)]
+    encrypted_hand = deck[topdeck_index : (topdeck_index + hand_size)]
 
-hand = [sra_decrypt(card, d, n) for card in encrypted_hand]
+    hand = [sra_decrypt(card, d, n) for card in encrypted_hand]
 
-print(hand)
+    print(hand)
 
-# If client has to draw
-if draw_index == assigned_index:
-    cch.draw()
+    # If client has to draw
+    if draw_index == assigned_index:
+        cch.draw()
 
-# If someoneelse has to draw
-else:
-    cch.reveal_cards(hand)
+    # If someoneelse has to draw
+    else:
+        cch.reveal_cards(hand)
+
+while True:
+    print('Listening for stake events')
+    value, last_raise_index = cch.catch_stake_event(assigned_index)
+
+    if last_raise_index == 0:
+        stringa = print('Choose an action:\n 1: Raise\n 2: Check\n 3: Fold')
+    else:
+        stringa = 'Player', last_raise_index, 'raised to', value, '\n\n'
+        stringa += 'Choose an action:\n 1: Raise\n 2: Call\n 3: Fold'
+    
+    print('1')
+    choice = 1
+    
+    if choice == 1:
+        cch.bet(choice)
+    
+    elif choice == 2 and last_raise_index == 0:
+        cch.check()
+    
+    elif choice == 2 and last_raise_index != 0:
+        cch.call(value)
+    
+    else: # choice == 3
+        cch.fold()
