@@ -26,11 +26,15 @@ contract Mental_Poker {
     uint256[] enc_keys;
     uint256[] dec_keys;
 
+    uint8[] verify_results;
+
     event shuffle_event(uint8 turn_index);
     event draw_event(uint8 turn_index, uint8 draw_index, uint8 topdeck_index, uint8 hand_size);
     event stake_event(uint8 turn_index);
     event key_reveal_event(uint8 turn_index);
-    event optimistic_verify();
+    event optimistic_verify_event();
+    event pay_to_verify_event();
+    event award_event();
 
     uint8 MAX_PLAYERS = 2;
     uint8 HAND_SIZE = 1;
@@ -50,6 +54,11 @@ contract Mental_Poker {
         fold_flags = new bool[](MAX_PLAYERS);
         enc_keys = new uint256[](MAX_PLAYERS);
         dec_keys = new uint256[](MAX_PLAYERS);
+
+        verify_results = new uint8[](MAX_PLAYERS);
+        for (uint8 i=0; i<MAX_PLAYERS; i++) {
+            verify_results[i] = MAX_PLAYERS;
+        }
     }
 
     function reset() public {
@@ -65,6 +74,11 @@ contract Mental_Poker {
         fold_flags = new bool[](MAX_PLAYERS);
         enc_keys = new uint256[](MAX_PLAYERS);
         dec_keys = new uint256[](MAX_PLAYERS);
+        
+        verify_results = new uint8[](MAX_PLAYERS);
+        for (uint8 i=0; i<MAX_PLAYERS; i++) {
+            verify_results[i] = MAX_PLAYERS;
+        }
     }
 
     function participate() public payable {
@@ -88,9 +102,12 @@ contract Mental_Poker {
         require(players_addresses.length > 0);
         
         uint8 index = MAX_PLAYERS;
-        for (uint8 i=0; i<players_addresses.length; i++)
-            if (players_addresses[i] == msg.sender)
+        for (uint8 i=0; i<players_addresses.length; i++) {
+            if (players_addresses[i] == msg.sender) {
                 index = i;
+                break;
+            }
+        }
         
         require(index != players_addresses.length);
 
@@ -255,7 +272,7 @@ contract Mental_Poker {
         turn_index = (turn_index + 1) % MAX_PLAYERS;
         if (enc_keys[turn_index] != 0 && dec_keys[turn_index] != 0) {
             status = Status.optimistic_verify;
-            emit optimistic_verify();
+            emit optimistic_verify_event();
         }
         else {
             emit key_reveal_event(turn_index);
@@ -270,7 +287,46 @@ contract Mental_Poker {
         return dec_keys;
     }
 
+    function optimistic_verify(uint8 winner_index) public {
+        require(status == Status.optimistic_verify);
 
+        uint8 index = MAX_PLAYERS;
+        for (uint8 i=0; i<players_addresses.length; i++) {
+            if (players_addresses[i] == msg.sender) {
+                index = i;
+                break;
+            }
+        }
+
+        require(index != MAX_PLAYERS);
+        require(verify_results[index] == MAX_PLAYERS);
+
+        verify_results[index] = winner_index;
+
+        for (uint8 i=0; i<verify_results.length; i++) {
+            if (verify_results[i] == MAX_PLAYERS) {
+                emit optimistic_verify_event();
+                return;
+            }
+        }
+        
+        for (uint8 i=0; i<verify_results.length; i++) {
+            if (verify_results[i] != winner_index) {
+                //da cambiare(?)
+                status = Status.pay_to_verify;
+                emit pay_to_verify_event();
+                return;
+            }
+        }
+
+        uint8 winnings = 0;
+        for (uint8 i=0; i<MAX_PLAYERS; i++){
+            winnings += bets[i];
+        }
+        
+        payable(players_addresses[winner_index]).transfer(winnings + PARTICIPATION_FEE);
+        emit award_event();
+    }
 
 
     function calculateModularExponentiation(

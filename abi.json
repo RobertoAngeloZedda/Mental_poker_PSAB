@@ -1,6 +1,99 @@
 [
 	{
 		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [],
+		"name": "award_event",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "turn_index",
+				"type": "uint8"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "draw_index",
+				"type": "uint8"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "topdeck_index",
+				"type": "uint8"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "hand_size",
+				"type": "uint8"
+			}
+		],
+		"name": "draw_event",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "turn_index",
+				"type": "uint8"
+			}
+		],
+		"name": "key_reveal_event",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [],
+		"name": "optimistic_verify_event",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [],
+		"name": "pay_to_verify_event",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "turn_index",
+				"type": "uint8"
+			}
+		],
+		"name": "shuffle_event",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "turn_index",
+				"type": "uint8"
+			}
+		],
+		"name": "stake_event",
+		"type": "event"
+	},
+	{
+		"inputs": [],
 		"name": "bet",
 		"outputs": [],
 		"stateMutability": "payable",
@@ -67,175 +160,6 @@
 	},
 	{
 		"inputs": [],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint8",
-				"name": "turn_index",
-				"type": "uint8"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint8",
-				"name": "draw_index",
-				"type": "uint8"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint8",
-				"name": "topdeck_index",
-				"type": "uint8"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint8",
-				"name": "hand_size",
-				"type": "uint8"
-			}
-		],
-		"name": "draw_event",
-		"type": "event"
-	},
-	{
-		"inputs": [],
-		"name": "fold",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "e",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "d",
-				"type": "uint256"
-			}
-		],
-		"name": "key_reveal",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint8",
-				"name": "turn_index",
-				"type": "uint8"
-			}
-		],
-		"name": "key_reveal_event",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [],
-		"name": "optimistic_verify",
-		"type": "event"
-	},
-	{
-		"inputs": [],
-		"name": "participate",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "reset",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256[]",
-				"name": "decripted_cards",
-				"type": "uint256[]"
-			}
-		],
-		"name": "reveal_cards",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256[]",
-				"name": "_encrypted_deck",
-				"type": "uint256[]"
-			}
-		],
-		"name": "shuffle",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_n",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint8[]",
-				"name": "_deck_coding",
-				"type": "uint8[]"
-			},
-			{
-				"internalType": "uint256[]",
-				"name": "_encrypted_deck",
-				"type": "uint256[]"
-			}
-		],
-		"name": "shuffle_dealer",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint8",
-				"name": "turn_index",
-				"type": "uint8"
-			}
-		],
-		"name": "shuffle_event",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint8",
-				"name": "turn_index",
-				"type": "uint8"
-			}
-		],
-		"name": "stake_event",
-		"type": "event"
-	},
-	{
-		"inputs": [],
 		"name": "draw_index",
 		"outputs": [
 			{
@@ -245,6 +169,13 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "fold",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -397,6 +328,24 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "e",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "d",
+				"type": "uint256"
+			}
+		],
+		"name": "key_reveal",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "last_raise_index",
 		"outputs": [
@@ -407,6 +356,82 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint8",
+				"name": "winner_index",
+				"type": "uint8"
+			}
+		],
+		"name": "optimistic_verify",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "participate",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "reset",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "decripted_cards",
+				"type": "uint256[]"
+			}
+		],
+		"name": "reveal_cards",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "_encrypted_deck",
+				"type": "uint256[]"
+			}
+		],
+		"name": "shuffle",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_n",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint8[]",
+				"name": "_deck_coding",
+				"type": "uint8[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "_encrypted_deck",
+				"type": "uint256[]"
+			}
+		],
+		"name": "shuffle_dealer",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{

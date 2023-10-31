@@ -178,6 +178,46 @@ class Contract_communication_handler:
 				
 			time.sleep(1)
 
+	def catch_optimistic_verify_event(self):
+
+		# check if my last transaction triggered the event
+		transaction = self.connection.eth.get_transaction(self.last_transaction)
+		block_number = transaction['blockNumber']
+		logs = self.contract.events.optimistic_verify_event.get_logs(fromBlock=block_number)
+		if len(logs) >= 1:
+			print('Past event caught (from block', block_number, '). ')
+			return
+		
+		# otherwise listen for it
+		event_filter = self.contract.events.optimistic_verify_event.create_filter(fromBlock='latest')
+
+		while True:
+			for event in event_filter.get_new_entries():
+				print('New event caught.')
+				return
+				
+			time.sleep(1)
+	
+	def catch_award_event(self):
+
+		# check if my last transaction triggered the event
+		transaction = self.connection.eth.get_transaction(self.last_transaction)
+		block_number = transaction['blockNumber']
+		logs = self.contract.events.award_event.get_logs(fromBlock=block_number)
+		if len(logs) >= 1:
+			print('Past event caught (from block', block_number, '). ')
+			return
+		
+		# otherwise listen for it
+		event_filter = self.contract.events.award_event.create_filter(fromBlock='latest')
+
+		while True:
+			for event in event_filter.get_new_entries():
+				print('New event caught.')
+				return
+				
+			time.sleep(1)
+
 	def transact(self, wei_amount: int):
 		try:
 			self.connection.eth.send_transaction(
@@ -302,3 +342,9 @@ class Contract_communication_handler:
 			return self.contract.functions.get_dec_keys().call({'from': self.wallet_address})
 		except:
 			exit('Error while calling function "get_dec_keys_call".')
+
+	def optimistic_verify(self, winner_index):
+		try:
+			return self.contract.functions.optimistic_verify(winner_index).transact({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "optimistic_verify".')
