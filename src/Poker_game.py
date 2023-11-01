@@ -194,6 +194,42 @@ class Poker_game:
         
         return (Hand_Ranking.HIGHCARD, sorted_hand)
     
+    def evaluate_hand(self, hand):
+        sorted_hand = self.sort_hand()
+        
+        flush_flag = True
+        straight_flag = True
+        first_pair_count = 1
+        second_pair_count = 0
+
+        for i in range(1, 5):
+            if flush_flag and sorted_hand[i].rank.value != sorted_hand[i-1].rank.value +1:
+                flush_flag = False
+            
+            if straight_flag and sorted_hand[i].suit.value != sorted_hand[i-1].suit.value:
+                straight_flag = False
+            
+            if sorted_hand[i].rank.value == sorted_hand[i-1].rank.value:
+                if second_pair_count < 1: first_pair_count += 1
+                else: second_pair_count += 1
+            else:
+                if first_pair_count > 1 and second_pair_count == 0:
+                    second_pair_count = 1
+        
+        if first_pair_count == 4: return (Hand_Ranking.FOUROFAKIND, sorted_hand)
+        elif first_pair_count == 3:
+            if second_pair_count == 2: return (Hand_Ranking.FULLHOUSE, sorted_hand)
+            else: return (Hand_Ranking.THREEOFAKIND, sorted_hand)
+        elif first_pair_count == 2:
+            if second_pair_count == 3: return (Hand_Ranking.FULLHOUSE, sorted_hand)
+            elif second_pair_count == 2: return (Hand_Ranking.TWOPAIR, sorted_hand)
+            else: return (Hand_Ranking.ONEPAIR, sorted_hand)
+        elif flush_flag and straight_flag: return (Hand_Ranking.STRAIGHTFLUSH)
+        elif flush_flag: return (Hand_Ranking.FLUSH)
+        elif straight_flag: return (Hand_Ranking.STRAIGHT)
+        else: return (Hand_Ranking.HIGHCARD)
+            
+
     def compare_ordered_hands(self, hand1, hand2):
         if hand1 == hand2:
             return None

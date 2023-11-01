@@ -3,52 +3,80 @@
 pragma solidity >=0.8.2;
 
 contract Mental_Poker {
-    // Status variables
-    enum Status {matchmaking, shuffle, draw_card, stake, key_reveal, optimistic_verify, pay_to_verify}
-    Status public status;
-    uint8 public turn_index;
-
-    // Draw phase variables
-    uint8 public draw_index;
-    uint8 public topdeck_index;
-
-    // Stake phase variables
-    uint8 public last_raise_index;
-    uint8[] bets;
-    bool[] fold_flags;
-
-    // Public game infos
-    uint256 n;
-    uint8[] deck_coding;
-    uint256[] encrypted_deck;
-    address[] players_addresses;
-
-    uint256[] enc_keys;
-    uint256[] dec_keys;
-
-    uint8[] verify_results;
-
-    event shuffle_event(uint8 turn_index);
-    event draw_event(uint8 turn_index, uint8 draw_index, uint8 topdeck_index, uint8 hand_size);
-    event stake_event(uint8 turn_index);
-    event key_reveal_event(uint8 turn_index);
-    event optimistic_verify_event();
-    event pay_to_verify_event();
-    event award_event();
-
+    
+    // CONSTANTS //
     uint8 MAX_PLAYERS = 2;
     uint8 HAND_SIZE = 1;
     uint8 PARTICIPATION_FEE = 5;
 
-    bytes output;
+
+    // PUBLIC GAME's INFOS
+    address[] players_addresses;
+    
+    uint256 n;
+    uint256[] enc_keys;
+    uint256[] dec_keys;
+    
+    uint8[] deck_coding;
+    uint256[] encrypted_deck;
+
+    uint8[] verify_results;
+
+
+    // STATUS VARIABLES //
+    enum Status {matchmaking, shuffle, draw_card, stake, key_reveal, optimistic_verify, pay_to_verify}
+    /* locks function access */
+    Status status;
+    /* generically used to convey which player has to act */
+    uint8 turn_index;
+
+
+    // DRAW PHASE VARIABLES //
+    /* while 'turn_index' indicates which player should decrypt a card, 
+     * 'draw_index' refers to the player that will draw the card that is being revealed */
+    uint8 draw_index;
+    /* since the deck is securely shuffled, drawing from the top is perfectly secure
+     * 'topdeck_index' points to the next card that will be drawn */
+    uint8 topdeck_index;
+
+
+    // STAKE PHASE VARIABLES //
+    /* keeps track of the last player that placed a bet in order to set an end to the stake loop */
+    uint8 last_raise_index;
+    /* tracks the bets placed */
+    uint8[] bets;
+    /* fold_flags[i] = true when player i folds, false instead */
+    bool[] fold_flags;
+
+
+    // EVENTS //
+    event shuffle_event(uint8 turn_index);
+    event draw_event(uint8 turn_index, uint8 draw_index, uint8 topdeck_index, uint8 hand_size);
+    event stake_event(uint8 turn_index);
+    event key_reveal_event();
+    event optimistic_verify_event();
+    event pay_to_verify_event();
+    event award_event();
+
+
+    // PUBLIC GAME's INFOS GETTERS //
+    function get_max_players() public view returns(uint256) { return MAX_PLAYERS; }
+    
+    function get_participation_fee() public view returns(uint256) { return PARTICIPATION_FEE; }
+    
+    function get_n() public view returns(uint256) { return n; }
+
+    function get_deck_coding() public view returns(uint8[] memory) { return deck_coding; }
+
+    function get_encrypted_deck() public view returns(uint256[] memory) { return encrypted_deck; }
+
+    function get_enc_keys() public view returns(uint256[] memory) { return enc_keys; }
+    
+    function get_dec_keys() public view returns(uint256[] memory) { return dec_keys; }
+
 
     constructor() {
         status = Status.matchmaking;
-        turn_index = 0;
-        draw_index = 0;
-        topdeck_index = 0;
-
-        last_raise_index = 0;
 
         bets = new uint8[](MAX_PLAYERS);
         fold_flags = new bool[](MAX_PLAYERS);
@@ -61,6 +89,7 @@ contract Mental_Poker {
         }
     }
 
+    /* for debugging sake */
     function reset() public {
         status = Status.matchmaking;
         turn_index = 0;
@@ -81,6 +110,8 @@ contract Mental_Poker {
         }
     }
 
+
+    // MATCHMAKING PHASE FUNCTIONS //
     function participate() public payable {
         require(status == Status.matchmaking);
         require(msg.value >= PARTICIPATION_FEE);
@@ -109,15 +140,14 @@ contract Mental_Poker {
             }
         }
         
-        require(index != players_addresses.length);
+        require(index < players_addresses.length);
 
         return index;
     }
 
-    function get_number_of_participants() public view returns (uint8) {
-        return uint8(players_addresses.length);
-    }
 
+    // SHUFFLE PHASE FUNCTIONS //
+    /* the first client that shuffles has to generate n and a deck_coding */
     function shuffle_dealer(uint256 _n, uint8[] memory _deck_coding, uint256[] memory _encrypted_deck) public {
         require(status == Status.shuffle && turn_index == 0);
         require(msg.sender == players_addresses[turn_index]);
@@ -148,18 +178,8 @@ contract Mental_Poker {
         }
     }
 
-    function get_n() public view returns(uint256) {
-        return n;
-    }
 
-    function get_deck_coding() public view returns(uint8[] memory) {
-        return deck_coding;
-    }
-
-    function get_encrypted_deck() public view returns(uint256[] memory) {
-        return encrypted_deck;
-    }
-
+    // DRAW PHASE FUNCTIONS //
     function reveal_cards(uint256[] calldata decripted_cards) public {
         require(status == Status.draw_card && turn_index != draw_index);
         require(msg.sender == players_addresses[turn_index]);
@@ -170,10 +190,6 @@ contract Mental_Poker {
         
         turn_index = (turn_index + 1) % MAX_PLAYERS;
         emit draw_event(turn_index, draw_index, topdeck_index, HAND_SIZE); 
-    }
-
-    function get_card(uint8 index) public view returns(uint256) {
-        return encrypted_deck[index];
     }
 
     function draw() public {
@@ -194,6 +210,8 @@ contract Mental_Poker {
         }
     }
     
+
+    // STAKE PHASE FUNCTIONS //
     function calculate_next_stake_turn() private {
         turn_index = (turn_index + 1) % MAX_PLAYERS;
 
@@ -206,7 +224,7 @@ contract Mental_Poker {
         else {
             emit stake_event(MAX_PLAYERS);
             status = Status.key_reveal;
-            emit key_reveal_event(turn_index);
+            emit key_reveal_event();
         }
     }
 
@@ -250,41 +268,41 @@ contract Mental_Poker {
         calculate_next_stake_turn();
     }
 
-    function get_last_raise_index() public view returns(uint8) {
-        return last_raise_index;
-    }
+    function get_last_raise_index() public view returns(uint8) { return last_raise_index; }
 
-    function get_bets() public view returns(uint8[] memory) {
-        return bets;
-    }
+    function get_bets() public view returns(uint8[] memory) { return bets; }
 
-    function get_fold_flags() public view returns(bool[] memory) {
-        return fold_flags;
-    }
+    function get_fold_flags() public view returns(bool[] memory) { return fold_flags; }
 
+
+    // OPTIMISTIC VERIFY PHASE FUNCTIONS //
     function key_reveal(uint256 e, uint256 d) public {
         require(status == Status.key_reveal);
-        require(msg.sender == players_addresses[turn_index]);
-
-        enc_keys[turn_index] = e;
-        dec_keys[turn_index] = d;
         
-        turn_index = (turn_index + 1) % MAX_PLAYERS;
-        if (enc_keys[turn_index] != 0 && dec_keys[turn_index] != 0) {
-            status = Status.optimistic_verify;
-            emit optimistic_verify_event();
+        uint8 index = MAX_PLAYERS;
+        for (uint8 i=0; i<players_addresses.length; i++) {
+            if (players_addresses[i] == msg.sender) {
+                index = i;
+                break;
+            }
         }
-        else {
-            emit key_reveal_event(turn_index);
-        }
-    }
+        require(index != MAX_PLAYERS);
+        
+        require(enc_keys[index] == 0);
+        require(dec_keys[index] == 0);
 
-    function get_enc_keys() public view returns(uint256[] memory) {
-        return enc_keys;
-    }
-    
-    function get_dec_keys() public view returns(uint256[] memory) {
-        return dec_keys;
+        enc_keys[index] = e;
+        dec_keys[index] = d;
+
+        for (uint8 i=0; i<MAX_PLAYERS; i++) {
+            if (enc_keys[i] == 0 || dec_keys[i] == 0) {
+                emit key_reveal_event();
+                return;
+            }
+        }
+        
+        status = Status.optimistic_verify;
+        emit optimistic_verify_event();
     }
 
     function optimistic_verify(uint8 winner_index) public {
@@ -297,8 +315,8 @@ contract Mental_Poker {
                 break;
             }
         }
-
         require(index != MAX_PLAYERS);
+        
         require(verify_results[index] == MAX_PLAYERS);
 
         verify_results[index] = winner_index;
@@ -365,6 +383,6 @@ contract Mental_Poker {
             }
         }
 
-        output = result;
+        //output = result;
     }
 }

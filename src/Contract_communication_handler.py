@@ -2,12 +2,14 @@ from web3 import Web3, HTTPProvider
 import json
 import time
 
+DEBUG = False
+
 class Contract_communication_handler:
-	
+
 	def __init__(self, addresses_file_path: str, abi_file_path: str, user_wallet_address: str, user_wallet_password: str):
 		try:
 			with open(addresses_file_path) as file:
-				lines = [line for i, line in enumerate(file)]
+				lines = [line.strip() for i, line in enumerate(file)]
 
 				if len(lines) != 2:
 					raise Exception('Addresses file does not meet the right format.')
@@ -25,38 +27,35 @@ class Contract_communication_handler:
 					raise Exception('Error in Addresses file line 2.')
 
 		except FileNotFoundError:
-			print('Addresses file not found.')
-			exit()
+			exit('Addresses file not found.')
 		except Exception as e:
-			print(str(e))
-			exit()
+			exit(str(e))
 		
 		try:
 			with open(abi_file_path) as file:
 				self.abi = json.load(file)
 		except FileNotFoundError:
-			print('Abi file not found.')
-			exit()
+			exit('Abi file not found.')
 
 		try:
 			self.connection = Web3(HTTPProvider(self.node_address))
+			if not self.connection.is_connected():
+				exit('Connection to node "' + self.node_address + '" failed.')
 		except:
-			print('Connection to node "' + self.node_address + '" failed.')
-			exit()
+			exit('Connection to node "' + self.node_address + '" failed.')
 		
 		try:
 			self.wallet_address = user_wallet_address
 			self.wallet_password = user_wallet_password
 			self.connection.eth.defaultAccount = self.connection.eth.account.from_key(self.wallet_password)
 		except:
-			print('User\'s wallet address error.')
-			exit()
+			exit('User\'s wallet address error.')
 		
 		try:
 			self.contract = self.connection.eth.contract(address=self.contract_address, abi=self.abi)
+			# call some function to verify connection
 		except:
-			print('Error during the creation of the "Contract" object.')
-			exit()
+			exit('Error during the creation of the "Contract" object.')
 
 	def catch_shuffle_event(self, turn_index):
 
@@ -67,7 +66,7 @@ class Contract_communication_handler:
 		if len(logs) >= 1:
 			_turn_index = logs[-1]['args']['turn_index']
 
-			print('Past event caught (from block', block_number, '). {turn_index:', _turn_index, '}')
+			if DEBUG: print('Past event caught (from block', block_number, '). {turn_index:', _turn_index, '}')
 			if _turn_index == turn_index:
 				return
 		
@@ -78,7 +77,7 @@ class Contract_communication_handler:
 			for event in event_filter.get_new_entries():
 				_turn_index = event['args']['turn_index']
 
-				print('New event caught. {turn_index:', _turn_index, '}')
+				if DEBUG: print('New event caught. {turn_index:', _turn_index, '}')
 				if _turn_index == turn_index:
 					return
 				
@@ -96,11 +95,11 @@ class Contract_communication_handler:
 			topdeck_index = logs[-1]['args']['topdeck_index']
 			hand_size = logs[-1]['args']['hand_size']
 
-			print('Past event caught (from block', block_number, ').',
-		          ' {turn_index:', _turn_index,
-		 		  ', draw_index:', draw_index,
-				  ', topdeck_index:', topdeck_index,
-				  ', hand_size:', hand_size, '}')
+			if DEBUG: print('Past event caught (from block', block_number, ').',
+		          	        ' {turn_index:', _turn_index,
+		 		            ', draw_index:', draw_index,
+				            ', topdeck_index:', topdeck_index,
+				            ', hand_size:', hand_size, '}')
 			if _turn_index == turn_index:
 				return draw_index, topdeck_index, hand_size
 		
@@ -114,11 +113,11 @@ class Contract_communication_handler:
 				topdeck_index = event['args']['topdeck_index']
 				hand_size = event['args']['hand_size']
 
-				print('New event caught.',
-		              ' {turn_index:', _turn_index,
-					  ', draw_index:', draw_index,
-					  ', topdeck_index:', topdeck_index,
-					  ', hand_size:', hand_size, '}')
+				if DEBUG: print('New event caught.',
+		                        ' {turn_index:', _turn_index,
+					            ', draw_index:', draw_index,
+					            ', topdeck_index:', topdeck_index,
+					            ', hand_size:', hand_size, '}')
 				if _turn_index == turn_index:
 					return draw_index, topdeck_index, hand_size
 				
@@ -133,8 +132,8 @@ class Contract_communication_handler:
 		if len(logs) >= 1:
 			_turn_index = logs[-1]['args']['turn_index']
 
-			print('Past event caught (from block', block_number, ').',
-		          ' {turn_index:', _turn_index, '}')
+			if DEBUG: print('Past event caught (from block', block_number, ').',
+		                    ' {turn_index:', _turn_index, '}')
 			if _turn_index == turn_index or _turn_index == end_index:
 				return _turn_index
 		
@@ -145,36 +144,30 @@ class Contract_communication_handler:
 			for event in event_filter.get_new_entries():
 				_turn_index = event['args']['turn_index']
 
-				print('New event caught.',
-					  ' {turn_index:', _turn_index, '}')
+				if DEBUG: print('New event caught.',
+					            ' {turn_index:', _turn_index, '}')
 				if _turn_index == turn_index or _turn_index == end_index:
 					return _turn_index
 				
 			time.sleep(1)
 	
-	def catch_key_reveal_event(self, turn_index):
+	def catch_key_reveal_event(self):
 
 		# check if my last transaction triggered the event
 		transaction = self.connection.eth.get_transaction(self.last_transaction)
 		block_number = transaction['blockNumber']
 		logs = self.contract.events.key_reveal_event.get_logs(fromBlock=block_number)
 		if len(logs) >= 1:
-			_turn_index = logs[-1]['args']['turn_index']
-
-			print('Past event caught (from block', block_number, '). {turn_index:', _turn_index, '}')
-			if _turn_index == turn_index:
-				return
+			if DEBUG: print('Past event caught (from block', block_number, '). ')
+			return
 		
 		# otherwise listen for it
 		event_filter = self.contract.events.key_reveal_event.create_filter(fromBlock='latest')
 
 		while True:
-			for event in event_filter.get_new_entries():
-				_turn_index = event['args']['turn_index']
-
-				print('New event caught. {turn_index:', _turn_index, '}')
-				if _turn_index == turn_index:
-					return
+			for _ in event_filter.get_new_entries():
+				if DEBUG: print('New event caught.')
+				return
 				
 			time.sleep(1)
 
@@ -185,15 +178,15 @@ class Contract_communication_handler:
 		block_number = transaction['blockNumber']
 		logs = self.contract.events.optimistic_verify_event.get_logs(fromBlock=block_number)
 		if len(logs) >= 1:
-			print('Past event caught (from block', block_number, '). ')
+			if DEBUG: print('Past event caught (from block', block_number, '). ')
 			return
 		
 		# otherwise listen for it
 		event_filter = self.contract.events.optimistic_verify_event.create_filter(fromBlock='latest')
 
 		while True:
-			for event in event_filter.get_new_entries():
-				print('New event caught.')
+			for _ in event_filter.get_new_entries():
+				if DEBUG: print('New event caught.')
 				return
 				
 			time.sleep(1)
@@ -205,28 +198,18 @@ class Contract_communication_handler:
 		block_number = transaction['blockNumber']
 		logs = self.contract.events.award_event.get_logs(fromBlock=block_number)
 		if len(logs) >= 1:
-			print('Past event caught (from block', block_number, '). ')
+			if DEBUG: print('Past event caught (from block', block_number, '). ')
 			return
 		
 		# otherwise listen for it
 		event_filter = self.contract.events.award_event.create_filter(fromBlock='latest')
 
 		while True:
-			for event in event_filter.get_new_entries():
-				print('New event caught.')
+			for _ in event_filter.get_new_entries():
+				if DEBUG: print('New event caught.')
 				return
 				
 			time.sleep(1)
-
-	def transact(self, wei_amount: int):
-		try:
-			self.connection.eth.send_transaction(
-				{'from': self.wallet_address,
-				'to': self.contract_address,
-				'value': wei_amount})
-		except:
-			print('Error during the transaction.')
-			exit()
 
 	def participate(self, fee):
 		try:
@@ -244,8 +227,7 @@ class Contract_communication_handler:
 		try:
 			self.last_transaction = self.contract.functions.shuffle_dealer(n, deck_coding, encrypted_deck).transact({'from': self.wallet_address})
 		except:
-			print('Error while calling function "shuffle_dealer".')
-			exit()
+			exit('Error while calling function "shuffle_dealer".')
 	
 	def get_n(self):
 		try:
@@ -264,6 +246,18 @@ class Contract_communication_handler:
 			return self.contract.functions.get_encrypted_deck().call({'from': self.wallet_address})
 		except:
 			exit('Error while calling function "get_encrypted_deck".')
+	
+	def get_max_players(self):
+		try:
+			return self.contract.functions.get_max_players().call({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "get_max_players".')
+	
+	def get_participation_fee(self):
+		try:
+			return self.contract.functions.get_participation_fee().call({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "get_participation_fee".')
 	
 	def shuffle(self, encrypted_deck):
 		try:

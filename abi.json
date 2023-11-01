@@ -43,14 +43,7 @@
 	},
 	{
 		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint8",
-				"name": "turn_index",
-				"type": "uint8"
-			}
-		],
+		"inputs": [],
 		"name": "key_reveal_event",
 		"type": "event"
 	},
@@ -160,19 +153,6 @@
 	},
 	{
 		"inputs": [],
-		"name": "draw_index",
-		"outputs": [
-			{
-				"internalType": "uint8",
-				"name": "",
-				"type": "uint8"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
 		"name": "fold",
 		"outputs": [],
 		"stateMutability": "nonpayable",
@@ -186,25 +166,6 @@
 				"internalType": "uint8[]",
 				"name": "",
 				"type": "uint8[]"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint8",
-				"name": "index",
-				"type": "uint8"
-			}
-		],
-		"name": "get_card",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -290,6 +251,19 @@
 	},
 	{
 		"inputs": [],
+		"name": "get_max_players",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "get_my_turn_index",
 		"outputs": [
 			{
@@ -316,12 +290,12 @@
 	},
 	{
 		"inputs": [],
-		"name": "get_number_of_participants",
+		"name": "get_participation_fee",
 		"outputs": [
 			{
-				"internalType": "uint8",
+				"internalType": "uint256",
 				"name": "",
-				"type": "uint8"
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -343,19 +317,6 @@
 		"name": "key_reveal",
 		"outputs": [],
 		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "last_raise_index",
-		"outputs": [
-			{
-				"internalType": "uint8",
-				"name": "",
-				"type": "uint8"
-			}
-		],
-		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -432,45 +393,6 @@
 		"name": "shuffle_dealer",
 		"outputs": [],
 		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "status",
-		"outputs": [
-			{
-				"internalType": "enum Mental_Poker.Status",
-				"name": "",
-				"type": "uint8"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "topdeck_index",
-		"outputs": [
-			{
-				"internalType": "uint8",
-				"name": "",
-				"type": "uint8"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "turn_index",
-		"outputs": [
-			{
-				"internalType": "uint8",
-				"name": "",
-				"type": "uint8"
-			}
-		],
-		"stateMutability": "view",
 		"type": "function"
 	}
 ]
