@@ -93,44 +93,6 @@
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "lengthB",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "lengthE",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "lengthM",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "bytes",
-				"name": "b",
-				"type": "bytes"
-			},
-			{
-				"internalType": "bytes",
-				"name": "e",
-				"type": "bytes"
-			},
-			{
-				"internalType": "bytes",
-				"name": "m",
-				"type": "bytes"
-			}
-		],
-		"name": "calculateModularExponentiation",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"inputs": [],
 		"name": "call",
 		"outputs": [],
@@ -186,6 +148,19 @@
 	},
 	{
 		"inputs": [],
+		"name": "get_deck",
+		"outputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "",
+				"type": "uint256[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "get_deck_coding",
 		"outputs": [
 			{
@@ -200,19 +175,6 @@
 	{
 		"inputs": [],
 		"name": "get_enc_keys",
-		"outputs": [
-			{
-				"internalType": "uint256[]",
-				"name": "",
-				"type": "uint256[]"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "get_encrypted_deck",
 		"outputs": [
 			{
 				"internalType": "uint256[]",
@@ -302,6 +264,19 @@
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "get_shuffle_step",
+		"outputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "",
+				"type": "uint256[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "uint256",
@@ -334,9 +309,92 @@
 	},
 	{
 		"inputs": [],
+		"name": "output",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "participate",
 		"outputs": [],
 		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "players_addresses",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint8",
+				"name": "index",
+				"type": "uint8"
+			}
+		],
+		"name": "report_deck_coding",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint8",
+				"name": "player_index",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint256",
+				"name": "proof",
+				"type": "uint256"
+			}
+		],
+		"name": "report_e_and_d",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "divisor",
+				"type": "uint256"
+			}
+		],
+		"name": "report_n",
+		"outputs": [],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "report_shuffle",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -363,7 +421,7 @@
 		"inputs": [
 			{
 				"internalType": "uint256[]",
-				"name": "_encrypted_deck",
+				"name": "encrypted_deck",
 				"type": "uint256[]"
 			}
 		],
@@ -386,13 +444,39 @@
 			},
 			{
 				"internalType": "uint256[]",
-				"name": "_encrypted_deck",
+				"name": "encrypted_deck",
 				"type": "uint256[]"
 			}
 		],
 		"name": "shuffle_dealer",
 		"outputs": [],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "status",
+		"outputs": [
+			{
+				"internalType": "enum Mental_Poker.Status",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "turn_index",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	}
 ]

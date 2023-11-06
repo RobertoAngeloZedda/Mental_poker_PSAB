@@ -2,7 +2,7 @@ from Contract_communication_handler import *
 from SRA import *
 import random
 
-DEBUG = False
+DEBUG = True
 
 def get_wallet_info():
     wallet_address = ''
@@ -62,7 +62,7 @@ def shuffle_dealer(assigned_index):
     if DEBUG: print('Listening for shuffle events')
     cch.catch_shuffle_event(assigned_index)
 
-    n = sra_setup(32)
+    n = sra_setup(256)
     if DEBUG: print('n =', n)
 
     deck_coding = generate_deck_encryption(n)
@@ -89,7 +89,7 @@ def shuffle(assigned_index):
     deck_coding = cch.get_deck_coding()
     if DEBUG: print('deck coding =\n', deck_coding)
 
-    deck = cch.get_encrypted_deck()
+    deck = cch.get_shuffle_step()
 
     e, d = sra_generate_key(n-1)
 
@@ -107,7 +107,7 @@ def deal_cards(n, d):
         if DEBUG: print('Listening for draw events')
         draw_index, topdeck_index, hand_size = cch.catch_draw_event(assigned_index)
 
-        deck = cch.get_encrypted_deck()
+        deck = cch.get_deck()
 
         encrypted_hand = deck[topdeck_index : (topdeck_index + hand_size)]
 
@@ -139,6 +139,7 @@ def stake_round():
                 print(f'\nLast player that raised: {last_raise_index}')
             else:
                 print('\nLast player that raised: You')
+        
         print(f'\nYour bet: {bets[assigned_index]}')
         for i, bet in enumerate(bets):
             if i != assigned_index:
@@ -208,7 +209,7 @@ def verify():
     cch.catch_optimistic_verify_event()
 
     # Determine winner
-    deck = cch.get_encrypted_deck()
+    deck = cch.get_deck()
     cards = []
     keys = cch.get_dec_keys()
     fold_flags = cch.get_fold_flags()

@@ -241,11 +241,17 @@ class Contract_communication_handler:
 		except:
 			exit('Error while calling function "get_deck_coding".')
 	
-	def get_encrypted_deck(self):
+	def get_deck(self):
 		try:
-			return self.contract.functions.get_encrypted_deck().call({'from': self.wallet_address})
+			return self.contract.functions.get_deck().call({'from': self.wallet_address})
 		except:
-			exit('Error while calling function "get_encrypted_deck".')
+			exit('Error while calling function "get_deck".')
+
+	def get_shuffle_step(self):
+		try:
+			return self.contract.functions.get_shuffle_step().call({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "get_shuffle_step".')
 	
 	def get_max_players(self):
 		try:
