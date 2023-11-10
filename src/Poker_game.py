@@ -196,7 +196,10 @@ class Poker_game:
     
     def evaluate_hand(self, hand):
         sorted_hand = self.sort_hand()
-        
+
+        card1 = Card()
+        card2 = Card()
+
         flush_flag = True
         straight_flag = True
         first_pair_count = 1
@@ -210,24 +213,40 @@ class Poker_game:
                 straight_flag = False
             
             if sorted_hand[i].rank.value == sorted_hand[i-1].rank.value:
-                if second_pair_count < 1: first_pair_count += 1
-                else: second_pair_count += 1
+                if second_pair_count < 1: 
+                    card1 = sorted_hand[i]
+                    first_pair_count += 1
+                else: 
+                    card2 = sorted_hand[i]
+                    second_pair_count += 1
             else:
                 if first_pair_count > 1 and second_pair_count == 0:
                     second_pair_count = 1
         
-        if first_pair_count == 4: return (Hand_Ranking.FOUROFAKIND, sorted_hand)
+        if first_pair_count == 1: card1 = sorted_hand[4]
+        
+        if first_pair_count == 4: 
+            return (Hand_Ranking.FOUROFAKIND, card1, card2)
+        
         elif first_pair_count == 3:
-            if second_pair_count == 2: return (Hand_Ranking.FULLHOUSE, sorted_hand)
-            else: return (Hand_Ranking.THREEOFAKIND, sorted_hand)
+            if second_pair_count == 2: 
+                return (Hand_Ranking.FULLHOUSE, card1, card2)
+            else: 
+                return (Hand_Ranking.THREEOFAKIND, card1, card2)
+        
         elif first_pair_count == 2:
-            if second_pair_count == 3: return (Hand_Ranking.FULLHOUSE, sorted_hand)
-            elif second_pair_count == 2: return (Hand_Ranking.TWOPAIR, sorted_hand)
-            else: return (Hand_Ranking.ONEPAIR, sorted_hand)
-        elif flush_flag and straight_flag: return (Hand_Ranking.STRAIGHTFLUSH)
-        elif flush_flag: return (Hand_Ranking.FLUSH)
-        elif straight_flag: return (Hand_Ranking.STRAIGHT)
-        else: return (Hand_Ranking.HIGHCARD)
+            if second_pair_count == 3: 
+                return (Hand_Ranking.FULLHOUSE, card1, card2)
+            elif second_pair_count == 2: 
+                return (Hand_Ranking.TWOPAIR, card2, card1)
+            else: 
+                return (Hand_Ranking.ONEPAIR, card1, card2)
+        
+        elif flush_flag and straight_flag: return (Hand_Ranking.STRAIGHTFLUSH, card1, card2)
+        elif flush_flag: return (Hand_Ranking.FLUSH, card1, card2)
+        elif straight_flag: return (Hand_Ranking.STRAIGHT, card1, card2)
+        
+        else: return (Hand_Ranking.HIGHCARD, card1, card2)
             
 
     def compare_ordered_hands(self, hand1, hand2):
@@ -263,6 +282,30 @@ class Poker_game:
                     best_hand = None
     
         return (winning_player, best_hand)
+
+    def hand_results(self):
+            winners = []
+            #winners_player = None
+            best_hand = None
+            best_card1 = None
+            best_card2 = None
+
+            for player in self.players:
+                player.show_hand()
+                evaluated_hand, card1, card2 = self.evaluate_hand(player.hand)
+                print(f"Hand ranking: {hand_ranking_dict[evaluated_hand]}\n")
+                
+                if best_hand is None or evaluated_hand.value > best_hand.value:
+                    winners.clear()
+                    winners.append(player)
+                    best_hand = evaluated_hand
+                    best_card1 = card1
+                    best_card2 = card2
+                elif evaluated_hand == best_hand:
+                    if card1 > best_card1:
+                    
+        
+            return (winning_player, best_hand)
 
     def play(self):
         self.print_players()

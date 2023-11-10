@@ -62,7 +62,7 @@ def shuffle_dealer(assigned_index):
     if DEBUG: print('Listening for shuffle events')
     cch.catch_shuffle_event(assigned_index)
 
-    n = sra_setup(256)
+    n = sra_setup(16)
     if DEBUG: print('n =', n)
 
     deck_coding = generate_deck_encryption(n)
@@ -70,9 +70,10 @@ def shuffle_dealer(assigned_index):
 
     e, d = sra_generate_key(n-1)
 
-    random.shuffle(deck_coding)
-
     enc = [sra_encrypt(card, e, n) for card in deck_coding]
+
+    random.shuffle(enc)
+
     if DEBUG: print('encrypted_deck =\n', enc)
 
     cch.shuffle_dealer(n, deck_coding, enc)
@@ -89,13 +90,14 @@ def shuffle(assigned_index):
     deck_coding = cch.get_deck_coding()
     if DEBUG: print('deck coding =\n', deck_coding)
 
-    deck = cch.get_shuffle_step()
+    deck = cch.get_deck()
 
     e, d = sra_generate_key(n-1)
 
-    random.shuffle(deck_coding)
-
     enc = [sra_encrypt(card, e, n) for card in deck]
+
+    random.shuffle(enc)
+
     if DEBUG: print('encrypted_deck =\n', enc)
 
     cch.shuffle(enc)
@@ -108,6 +110,8 @@ def deal_cards(n, d):
         draw_index, topdeck_index, hand_size = cch.catch_draw_event(assigned_index)
 
         deck = cch.get_deck()
+
+        if DEBUG: print(deck)
 
         encrypted_hand = deck[topdeck_index : (topdeck_index + hand_size)]
 

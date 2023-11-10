@@ -100,6 +100,25 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "cards_owner",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "check",
 		"outputs": [],
@@ -115,6 +134,19 @@
 	},
 	{
 		"inputs": [],
+		"name": "draw_index",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "fold",
 		"outputs": [],
 		"stateMutability": "nonpayable",
@@ -125,9 +157,9 @@
 		"name": "get_bets",
 		"outputs": [
 			{
-				"internalType": "uint8[]",
+				"internalType": "uint256[2]",
 				"name": "",
-				"type": "uint8[]"
+				"type": "uint256[2]"
 			}
 		],
 		"stateMutability": "view",
@@ -138,9 +170,9 @@
 		"name": "get_dec_keys",
 		"outputs": [
 			{
-				"internalType": "uint256[]",
+				"internalType": "uint256[2]",
 				"name": "",
-				"type": "uint256[]"
+				"type": "uint256[2]"
 			}
 		],
 		"stateMutability": "view",
@@ -151,9 +183,9 @@
 		"name": "get_deck",
 		"outputs": [
 			{
-				"internalType": "uint256[]",
+				"internalType": "uint256[52]",
 				"name": "",
-				"type": "uint256[]"
+				"type": "uint256[52]"
 			}
 		],
 		"stateMutability": "view",
@@ -164,9 +196,9 @@
 		"name": "get_deck_coding",
 		"outputs": [
 			{
-				"internalType": "uint8[]",
+				"internalType": "uint8[52]",
 				"name": "",
-				"type": "uint8[]"
+				"type": "uint8[52]"
 			}
 		],
 		"stateMutability": "view",
@@ -177,9 +209,9 @@
 		"name": "get_enc_keys",
 		"outputs": [
 			{
-				"internalType": "uint256[]",
+				"internalType": "uint256[2]",
 				"name": "",
-				"type": "uint256[]"
+				"type": "uint256[2]"
 			}
 		],
 		"stateMutability": "view",
@@ -190,9 +222,9 @@
 		"name": "get_fold_flags",
 		"outputs": [
 			{
-				"internalType": "bool[]",
+				"internalType": "bool[2]",
 				"name": "",
-				"type": "bool[]"
+				"type": "bool[2]"
 			}
 		],
 		"stateMutability": "view",
@@ -221,7 +253,7 @@
 				"type": "uint256"
 			}
 		],
-		"stateMutability": "view",
+		"stateMutability": "pure",
 		"type": "function"
 	},
 	{
@@ -260,20 +292,7 @@
 				"type": "uint256"
 			}
 		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "get_shuffle_step",
-		"outputs": [
-			{
-				"internalType": "uint256[]",
-				"name": "",
-				"type": "uint256[]"
-			}
-		],
-		"stateMutability": "view",
+		"stateMutability": "pure",
 		"type": "function"
 	},
 	{
@@ -360,6 +379,13 @@
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "report_draw",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "uint8",
@@ -420,9 +446,33 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256[]",
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "revealed_cards",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[52]",
 				"name": "encrypted_deck",
-				"type": "uint256[]"
+				"type": "uint256[52]"
 			}
 		],
 		"name": "shuffle",
@@ -438,14 +488,14 @@
 				"type": "uint256"
 			},
 			{
-				"internalType": "uint8[]",
+				"internalType": "uint8[52]",
 				"name": "_deck_coding",
-				"type": "uint8[]"
+				"type": "uint8[52]"
 			},
 			{
-				"internalType": "uint256[]",
+				"internalType": "uint256[52]",
 				"name": "encrypted_deck",
-				"type": "uint256[]"
+				"type": "uint256[52]"
 			}
 		],
 		"name": "shuffle_dealer",
@@ -454,11 +504,48 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "shuffle_steps",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "status",
 		"outputs": [
 			{
 				"internalType": "enum Mental_Poker.Status",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "topdeck_index",
+		"outputs": [
+			{
+				"internalType": "uint8",
 				"name": "",
 				"type": "uint8"
 			}
