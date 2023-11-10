@@ -5,15 +5,15 @@ pragma solidity >=0.8.2;
 contract Mental_Poker {
     
     // CONSTANTS //
-    uint8 constant MAX_PLAYERS = 2;
-    uint8 constant HAND_SIZE = 1;
-    uint8 constant PARTICIPATION_FEE = 5;
+    uint8 public constant MAX_PLAYERS = 2;
+    uint8 public constant HAND_SIZE = 1;
+    uint8 public constant PARTICIPATION_FEE = 5;
     uint8 constant DECK_SIZE = 52;
 
     // PUBLIC GAME's INFOS
     address[MAX_PLAYERS] public players_addresses;
     
-    uint256 n;
+    uint256 public n;
     uint256[MAX_PLAYERS] enc_keys;
     uint256[MAX_PLAYERS] dec_keys;
     
@@ -54,7 +54,7 @@ contract Mental_Poker {
 
     // VERIFY PHASE VARIABLES //
     uint256 public output;
-    
+
 
     // EVENTS //
     event shuffle_event(uint8 turn_index);
@@ -65,14 +65,8 @@ contract Mental_Poker {
     event pay_to_verify_event();
     event award_event();
 
-
-    // PUBLIC GAME's INFOS GETTERS //
-    function get_max_players() public pure returns(uint256) { return MAX_PLAYERS; }
     
-    function get_participation_fee() public pure returns(uint256) { return PARTICIPATION_FEE; }
-    
-    function get_n() public view returns(uint256) { return n; }
-
+    // PUBLIC GAME INFO GETTERS //
     function get_deck_coding() public view returns(uint8[DECK_SIZE] memory) { return deck_coding; }
 
     function get_enc_keys() public view returns(uint256[MAX_PLAYERS] memory) { return enc_keys; }
@@ -115,13 +109,13 @@ contract Mental_Poker {
         turn_index = 0;
         draw_index = 0;
         topdeck_index = 0;
-
+        
         last_raise_index = 0;
 
         output = 0;
     }
 
-    function next() private {
+function next() private {
         if (status == Status.matchmaking) {
             // If there are enough players game can start
             if (players_addresses[players_addresses.length-1] != address(0)) {
@@ -246,7 +240,7 @@ contract Mental_Poker {
                 players_addresses[i] = msg.sender;
                 break;
             }
-        }
+}
 
         next();
     }
@@ -323,8 +317,8 @@ contract Mental_Poker {
         for (uint8 i; i<DECK_SIZE; i++) {
             if (cards_owner[i] == MAX_PLAYERS)
                 deck[i] = shuffle_steps[MAX_PLAYERS-1][i];
-            else {
-                uint8 prev_index;
+        else {
+            uint8 prev_index;
                 if (cards_owner[i] == 0)
                     prev_index = MAX_PLAYERS-1;
                 else
@@ -346,7 +340,7 @@ contract Mental_Poker {
 
         for (uint8 i; i<HAND_SIZE; i++) {
             revealed_cards[turn_index][topdeck_index + i] = decripted_cards[i];
-            cards_owner[topdeck_index+i] = draw_index;
+        cards_owner[topdeck_index+i] = draw_index;
         }
 
         next();
@@ -358,10 +352,10 @@ contract Mental_Poker {
 
         next();
     }
-
+    
 
     // STAKE PHASE FUNCTIONS //
-    function bet() public payable {
+        function bet() public payable {
         require(status == Status.stake);
         require(msg.sender == players_addresses[turn_index]);
         require(msg.value > bets[last_raise_index] - bets[turn_index]);
@@ -426,7 +420,7 @@ contract Mental_Poker {
 
         enc_keys[index] = e;
         dec_keys[index] = d;
-        
+
         next();
     }
 
@@ -522,11 +516,11 @@ contract Mental_Poker {
         //if (output == proof) {
         if (result == proof) {
             // refund everyone expect client who reported
-            output = 2;
+output = 2;
             return;
         } else {
             // refund everyone except player_index
-            output = 1;
+output = 1;
             return;
         }
     }

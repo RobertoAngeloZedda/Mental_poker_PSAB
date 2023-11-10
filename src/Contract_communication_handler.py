@@ -9,7 +9,7 @@ class Contract_communication_handler:
 	def __init__(self, addresses_file_path: str, abi_file_path: str, user_wallet_address: str, user_wallet_password: str):
 		try:
 			with open(addresses_file_path) as file:
-				lines = [line.strip() for i, line in enumerate(file)]
+				lines = [line.strip() for _, line in enumerate(file)]
 
 				if len(lines) != 2:
 					raise Exception('Addresses file does not meet the right format.')
@@ -229,35 +229,53 @@ class Contract_communication_handler:
 		except:
 			exit('Error while calling function "shuffle_dealer".')
 	
-	def get_n(self):
-		try:
-			return self.contract.functions.get_n().call({'from': self.wallet_address})
-		except:
-			exit('Error while calling function "get_n".')
-	
-	def get_deck_coding(self):
-		try:
-			return self.contract.functions.get_deck_coding().call({'from': self.wallet_address})
-		except:
-			exit('Error while calling function "get_deck_coding".')
-
-	def get_deck(self):
-		try:
-			return self.contract.functions.get_deck().call({'from': self.wallet_address})
-		except:
-			exit('Error while calling function "get_deck".')
-	
 	def get_max_players(self):
 		try:
-			return self.contract.functions.get_max_players().call({'from': self.wallet_address})
+			return self.contract.functions.MAX_PLAYERS().call()
 		except:
-			exit('Error while calling function "get_max_players".')
+			exit('Error while accessing attribute "MAX_PLAYERS".')
+	
+	def get_hand_size(self):
+		try:
+			return self.contract.functions.HAND_SIZE().call()
+		except:
+			exit('Error while accessing attribute "HAND_SIZE".')
 	
 	def get_participation_fee(self):
 		try:
-			return self.contract.functions.get_participation_fee().call({'from': self.wallet_address})
+			return self.contract.functions.PARTICIPATION_FEE().call()
 		except:
-			exit('Error while calling function "get_participation_fee".')
+			exit('Error while accessing attribute "PARTICIPATION_FEE".')
+	
+	def get_n(self):
+		try:
+			return self.contract.functions.n().call()
+		except:
+			exit('Error while accessing attribute "n".')
+	
+	def get_enc_keys(self):
+		try:
+			return self.contract.functions.get_enc_keys().call()
+		except:
+			exit('Error while calling function "get_enc_keys".')
+	
+	def get_dec_keys(self):
+		try:
+			return self.contract.functions.get_dec_keys().call()
+		except:
+			exit('Error while calling function "get_dec_keys".')
+	
+	def get_deck_coding(self):
+		try:
+			return self.contract.functions.get_deck_coding().call()
+		except:
+			exit('Error while calling function "get_deck_coding".')
+	
+	def get_deck(self):
+		try:
+			return self.contract.functions.get_deck().call()
+		except:
+			exit('Error while calling function "get_deck".')
 	
 	def shuffle(self, encrypted_deck):
 		try:
@@ -324,18 +342,6 @@ class Contract_communication_handler:
 			return self.contract.functions.key_reveal(e, d).transact({'from': self.wallet_address})
 		except:
 			exit('Error while calling function "key_reveal".')
-		
-	def get_enc_keys(self):
-		try:
-			return self.contract.functions.get_enc_keys().call({'from': self.wallet_address})
-		except:
-			exit('Error while calling function "get_enc_keys_call".')
-		
-	def get_dec_keys(self):
-		try:
-			return self.contract.functions.get_dec_keys().call({'from': self.wallet_address})
-		except:
-			exit('Error while calling function "get_dec_keys_call".')
 
 	def optimistic_verify(self, winner_index):
 		try:

@@ -87,6 +87,45 @@
 	},
 	{
 		"inputs": [],
+		"name": "HAND_SIZE",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "MAX_PLAYERS",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "PARTICIPATION_FEE",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "bet",
 		"outputs": [],
 		"stateMutability": "payable",
@@ -157,9 +196,9 @@
 		"name": "get_bets",
 		"outputs": [
 			{
-				"internalType": "uint256[2]",
+				"internalType": "uint256[3]",
 				"name": "",
-				"type": "uint256[2]"
+				"type": "uint256[3]"
 			}
 		],
 		"stateMutability": "view",
@@ -170,9 +209,9 @@
 		"name": "get_dec_keys",
 		"outputs": [
 			{
-				"internalType": "uint256[2]",
+				"internalType": "uint256[3]",
 				"name": "",
-				"type": "uint256[2]"
+				"type": "uint256[3]"
 			}
 		],
 		"stateMutability": "view",
@@ -209,9 +248,9 @@
 		"name": "get_enc_keys",
 		"outputs": [
 			{
-				"internalType": "uint256[2]",
+				"internalType": "uint256[3]",
 				"name": "",
-				"type": "uint256[2]"
+				"type": "uint256[3]"
 			}
 		],
 		"stateMutability": "view",
@@ -222,9 +261,9 @@
 		"name": "get_fold_flags",
 		"outputs": [
 			{
-				"internalType": "bool[2]",
+				"internalType": "bool[3]",
 				"name": "",
-				"type": "bool[2]"
+				"type": "bool[3]"
 			}
 		],
 		"stateMutability": "view",
@@ -245,19 +284,6 @@
 	},
 	{
 		"inputs": [],
-		"name": "get_max_players",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"inputs": [],
 		"name": "get_my_turn_index",
 		"outputs": [
 			{
@@ -267,32 +293,6 @@
 			}
 		],
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "get_n",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "get_participation_fee",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "pure",
 		"type": "function"
 	},
 	{
@@ -311,6 +311,19 @@
 		"name": "key_reveal",
 		"outputs": [],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "n",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{

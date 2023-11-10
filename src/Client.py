@@ -1,8 +1,9 @@
 from Contract_communication_handler import *
 from SRA import *
+from UI import *
 import random
 
-DEBUG = True
+DEBUG = False
 
 def get_wallet_info():
     wallet_address = ''
@@ -13,7 +14,7 @@ def get_wallet_info():
 
         try:
             with open(file_path) as file:
-                lines = [line.strip() for i, line in enumerate(file)]
+                lines = [line.strip() for _, line in enumerate(file)]
 
                 if len(lines) != 2:
                     raise Exception('Wallet file does not meet the right format.')
@@ -57,6 +58,9 @@ def generate_deck_encryption(n):
             deck_coding.append(i)
             count += 1
     return deck_coding
+
+def int_to_card(index, deck_map):
+    return deck_map[index]
 
 def shuffle_dealer(assigned_index):
     if DEBUG: print('Listening for shuffle events')
@@ -105,13 +109,13 @@ def shuffle(assigned_index):
     return n, e, d
 
 def deal_cards(n, d):
+    player_hand = []
+
     for _ in range(max_players):
         if DEBUG: print('Listening for draw events')
         draw_index, topdeck_index, hand_size = cch.catch_draw_event(assigned_index)
 
         deck = cch.get_deck()
-
-        if DEBUG: print(deck)
 
         encrypted_hand = deck[topdeck_index : (topdeck_index + hand_size)]
 
@@ -119,14 +123,16 @@ def deal_cards(n, d):
 
         # If client has to draw
         if draw_index == assigned_index:
-            print('\nYour hand:')
-            for card in hand:
-                print(card)
+            #player_hand = hand
+            for i in range(max_players):
+                player_hand.append(int_to_card(hand[i], deck_map))
             cch.draw()
 
         # If someone else has to draw
         else:
             cch.reveal_cards(hand)
+        
+    return player_hand
 
 def stake_round():
     turn_index = 0
@@ -137,68 +143,34 @@ def stake_round():
         last_raise_index = cch.get_last_raise_index()
         bets = cch.get_bets()
         fold_flags = cch.get_fold_flags()
-
-        if not all(bet == 0 for bet in bets):
-            if assigned_index != last_raise_index:
-                print(f'\nLast player that raised: {last_raise_index}')
-            else:
-                print('\nLast player that raised: You')
         
-        print(f'\nYour bet: {bets[assigned_index]}')
-        for i, bet in enumerate(bets):
-            if i != assigned_index:
-                print(f'Player {i}\'s bet: {bet}')
-        for i, flag in enumerate(fold_flags):
-            if flag:
-                if i != assigned_index:
-                    print(f'Player {i} has folded')
-                else:
-                    print('You folded')
+        clear_screen()
+        print('Your hand:')
+        print_hand(player_hand)
+        print_bets(max_players, assigned_index, last_raise_index, bets, fold_flags)
 
         # when stake phase is over 'turn_index = max_players'
         if turn_index >= max_players:
             break
-
+        
         if turn_index == assigned_index:
-            repeat_input = True
-            while (repeat_input):
-                if all(bet == 0 for bet in bets):
-                    stringa = '\nChoose an action:\n 1: Raise\n 2: Check\n 3: Fold'
-                else:
-                    stringa = '\nChoose an action:\n 1: Raise\n 2: Call\n 3: Fold'
-                print(stringa)
-
-                match input():
-                    case '1':
-                        repeat_input = False
-                        bet = ''
-                        while not (bet.isdigit()):
-                            bet = input(f'How much do you want to bet? (min {bets[last_raise_index] - bets[assigned_index] + 1})\n')
-                            if bet.isdigit():
-                                if int(bet) > bets[last_raise_index] - bets[assigned_index]:
-                                    cch.bet(int(bet))
-                                else:
-                                    print('The amount you chose is not enough to raise')
-                                    bet = ''
-                            else:
-                                print('Not a number, try again')
-                    case '2':
-                        repeat_input = False
-                        if all(bet == 0 for bet in bets):
-                            cch.check()
-                        else:
-                            cch.call(bets[last_raise_index] - bets[assigned_index])
-                    case '3':
-                        repeat_input = False
-                        cch.fold()
-                    case _:
-                        repeat_input = True
-                        print('Input not accepted, try again\n')
+            choice = print_options(assigned_index, last_raise_index, bets)
+            match choice[0]:
+                case '1':
+                    cch.bet(choice[1])
+                case '2':
+                    if all(bet == 0 for bet in bets):
+                        cch.check()
+                    else:
+                        cch.call(bets[last_raise_index] - bets[assigned_index])
+                case '3':
+                    cch.fold()
+                
+            clear_screen()
         else:
             print(f'\nWaiting for Player {turn_index}\'s action...')
         
         turn_index = calculate_next_turn(turn_index, fold_flags, max_players)
-        #print(turn_index)
 
 def key_reveal(e, d):
     if DEBUG: print('Listening for key reveal events')
@@ -214,28 +186,33 @@ def verify():
 
     # Determine winner
     deck = cch.get_deck()
-    cards = []
+    hand_size = cch.get_hand_size()
+    hands = [[0 for j in range(hand_size)] for i in range(max_players)]
     keys = cch.get_dec_keys()
     fold_flags = cch.get_fold_flags()
+    topdeck_index = 0
     
-    print('\n')
     for i in range(max_players):
-        cards.append(deck[i])
+        hands[i] = deck[topdeck_index : (topdeck_index + hand_size)]
+        topdeck_index = topdeck_index + hand_size
+
+        for j in range(hand_size):
+            for k in range(max_players):
+                if i == k: #remove
+                    hands[i][j] = int_to_card(sra_decrypt(hands[i][j], keys[k], n), deck_map)
         
-        for j in range(max_players):
-            if (i == j):
-                cards[i] = sra_decrypt(cards[i], keys[j], n)
-        
-        if i != assigned_index:
-            print(f'Player {i}\'s hand: {cards[i]}')
+        if i == assigned_index:
+            print('\nYour hand:')
         else:
-            print(f'Your hand: {cards[i]}')
+            print(f'\nPlayer {i}\'s hand:')
+        
+        print_hand(hands[i])
 
     winner = 0
     best_card = 0
     for i in range(max_players):
-        if not fold_flags[i] and cards[i] > best_card:
-            best_card = cards[i]
+        if not fold_flags[i] and hands[i][0].rank.value > best_card:
+            best_card = hands[i][0].rank.value
             winner = i
 
     if DEBUG: print(f'\nYour winner: {winner}')
@@ -273,8 +250,9 @@ if __name__ == '__main__':
     # If client is not dealer (he reads n and deck coding)
     else:
         n, e, d = shuffle(assigned_index)
-
-    deal_cards(n, d)
+    
+    deck_map = {key: value for key, value in zip(cch.get_deck_coding(), [Card(suit, rank) for suit in Suit for rank in Rank])}
+    player_hand = deal_cards(n, d)
 
     stake_round()
 

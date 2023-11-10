@@ -1,0 +1,2 @@
+wallet_address: 0x2cFF5d7F780E47EE5ac01ff5A8C5eE0E35f9b545
+wallet_password: 0xd680f298fe04bc678adfb266c9e56dbb4d215f128fb083646ce212f9d099710d
