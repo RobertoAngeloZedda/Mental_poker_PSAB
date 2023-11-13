@@ -123,8 +123,7 @@ def deal_cards(n, d):
 
         # If client has to draw
         if draw_index == assigned_index:
-            #player_hand = hand
-            for i in range(max_players):
+            for i in range(hand_size):
                 player_hand.append(int_to_card(hand[i], deck_map))
             cch.draw()
 

@@ -5,8 +5,8 @@ pragma solidity >=0.8.2;
 contract Mental_Poker {
     
     // CONSTANTS //
-    uint8 public constant MAX_PLAYERS = 2;
-    uint8 public constant HAND_SIZE = 1;
+    uint8 public constant MAX_PLAYERS = 3;
+    uint8 public constant HAND_SIZE = 5;
     uint8 public constant PARTICIPATION_FEE = 5;
     uint8 constant DECK_SIZE = 52;
 
@@ -373,7 +373,7 @@ function next() private {
         require(bets[last_raise_index] - bets[turn_index] > 0);
         require(msg.value == bets[last_raise_index] - bets[turn_index]);
 
-        bets[turn_index] += uint8(msg.value);
+        bets[turn_index] += uint256(msg.value);
 
         next();
     }
