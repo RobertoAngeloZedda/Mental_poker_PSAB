@@ -1,9 +1,10 @@
 from Contract_communication_handler import *
+from Poker import *
 from SRA import *
 from UI import *
 import random
 
-DEBUG = False
+DEBUG = True
 
 def get_wallet_info():
     wallet_address = ''
@@ -46,6 +47,18 @@ def calculate_next_turn(turn_index, fold_flags, max_players):
     else:
         return new_turn_index
 
+def calculate_next_turn_linear(turn_index, fold_flags, max_players):
+    new_turn_index = turn_index + 1
+
+    if new_turn_index == max_players:
+        return new_turn_index
+
+    # skip players if they folded
+    if fold_flags[new_turn_index]:
+        return calculate_next_turn(new_turn_index, fold_flags, max_players)
+    else:
+        return new_turn_index
+
 def generate_deck_encryption(n):
     # Choosing only quadratic residues to map the cards to represent the deck
     deck_coding = []
@@ -61,6 +74,23 @@ def generate_deck_encryption(n):
 
 def int_to_card(index, deck_map):
     return deck_map[index]
+
+def calculate_hands():
+    deck = cch.get_deck()
+    cards_owner = cch.get_cards_owner()
+    hand_size = cch.get_hand_size
+    hands = [[] for _ in range(max_players)]
+        
+    hands_filled = 0
+    for i in range(len(cards_owner)):
+        player_index = cards_owner[i]
+        hands[player_index].append(deck[i])
+        if len(hands[player_index]) == hand_size:
+            hands_filled +=1
+            if hands_filled == max_players:
+                break
+    
+    return hands
 
 def shuffle_dealer(assigned_index):
     if DEBUG: print('Listening for shuffle events')
@@ -171,6 +201,56 @@ def stake_round():
         
         turn_index = calculate_next_turn(turn_index, fold_flags, max_players)
 
+def card_change():
+    turn_index = 0
+    while turn_index < max_players:
+        if DEBUG: print('Listening for card change events')
+        cch.catch_card_change_event(turn_index)
+        
+        fold_flags = cch.get_fold_flags()
+
+        if turn_index >= max_players:
+            break
+
+        if turn_index == assigned_index:
+            if not fold_flags[assigned_index]:
+                cards_to_change = print_card_change()
+                cch.card_change(cards_to_change)
+        else:
+            print(f'\nWaiting for Player {turn_index}\'s action...')
+        
+        turn_index = calculate_next_turn_linear(turn_index, fold_flags, max_players)
+
+def deal_replacement_cards(n, d, player_hand):
+    for _ in range(max_players):
+        if DEBUG: print('Listening for draw events')
+        draw_index, topdeck_index, num_cards = cch.catch_draw_event(assigned_index)
+
+        changed_cards = cch.get_changed_cards()
+
+        deck = cch.get_deck()
+
+        encrypted_cards = deck[topdeck_index : (topdeck_index + num_cards)]
+
+        cards = [sra_decrypt(card, d, n) for card in encrypted_cards]
+
+        # If client has to draw
+        if draw_index == assigned_index:
+            i = 0
+            popped_cards = 0
+            for j in range(len(changed_cards[assigned_index])):
+                if changed_cards[assigned_index][j]:
+                    player_hand.pop(j - popped_cards)
+                    player_hand.append(int_to_card(cards[i], deck_map))
+                    i += 1
+                    popped_cards += 1
+            cch.draw()
+        # If someone else has to draw
+        else:
+            cch.reveal_cards(cards)
+        
+    return player_hand
+
 def key_reveal(e, d):
     if DEBUG: print('Listening for key reveal events')
     cch.catch_key_reveal_event()
@@ -184,17 +264,12 @@ def verify():
     cch.catch_optimistic_verify_event()
 
     # Determine winner
-    deck = cch.get_deck()
     hand_size = cch.get_hand_size()
-    hands = [[0 for j in range(hand_size)] for i in range(max_players)]
     keys = cch.get_dec_keys()
     fold_flags = cch.get_fold_flags()
-    topdeck_index = 0
-    
-    for i in range(max_players):
-        hands[i] = deck[topdeck_index : (topdeck_index + hand_size)]
-        topdeck_index = topdeck_index + hand_size
+    hands = calculate_hands()
 
+    for i in range(max_players):
         for j in range(hand_size):
             for k in range(max_players):
                 if i == k: #remove
@@ -207,23 +282,35 @@ def verify():
         
         print_hand(hands[i])
 
-    winner = 0
-    best_card = 0
+    winner = None
+    best_hand = None
     for i in range(max_players):
-        if not fold_flags[i] and hands[i][0].rank.value > best_card:
-            best_card = hands[i][0].rank.value
-            winner = i
+        if not fold_flags[i]:
+            evaluated_hand = evaluate_hand(hands[i])
+        
+            if best_hand is None or evaluated_hand[0].value > best_hand[0].value:
+                best_hand = evaluated_hand
+                winner = i
+            elif evaluated_hand[0] == best_hand[0]:
+                # if hand rank is equal, compare value of cards 
+                higher_valued_hand = compare_ordered_hands(best_hand[1], evaluated_hand[1])
+                if higher_valued_hand == evaluated_hand[1]:
+                    winner = i
+                    best_hand = evaluated_hand
+                elif higher_valued_hand == None:
+                    winner == None
+                    best_hand = None
 
     if DEBUG: print(f'\nYour winner: {winner}')
 
     cch.optimistic_verify(winner)
 
-    return winner
+    return (winner, best_hand)
 
-def award(winner):
+def award(winner, winner_hand):
     if DEBUG: print('Listening for award events')
     cch.catch_award_event()
-    print(f'\nWinner: {winner}')
+    print_winner(winner, winner_hand, assigned_index)
 
 if __name__ == '__main__':
 
@@ -251,12 +338,19 @@ if __name__ == '__main__':
         n, e, d = shuffle(assigned_index)
     
     deck_map = {key: value for key, value in zip(cch.get_deck_coding(), [Card(suit, rank) for suit in Suit for rank in Rank])}
+    
     player_hand = deal_cards(n, d)
-
+    
+    stake_round()
+    
+    card_change()
+    
+    player_hand = deal_replacement_cards(n, d, player_hand)
+    
     stake_round()
 
     key_reveal(e, d)
 
-    winners_index = verify()
+    (winner_index, winner_hand) = verify()
 
-    award(winners_index)
+    award(winner_index, winner_hand)

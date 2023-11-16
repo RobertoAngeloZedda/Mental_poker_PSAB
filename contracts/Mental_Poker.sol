@@ -27,7 +27,7 @@ contract Mental_Poker {
 
 
     // STATUS VARIABLES //
-    enum Status {matchmaking, shuffle, draw_card, stake, key_reveal, optimistic_verify, pay_to_verify}
+    enum Status {matchmaking, shuffle, draw_card_1, stake_1, card_change, draw_card_2, stake_2, key_reveal, optimistic_verify, pay_to_verify}
     /* locks function access */
     Status public status;
     /* generically used to convey which player has to act */
@@ -50,6 +50,13 @@ contract Mental_Poker {
     uint256[MAX_PLAYERS] bets;
     /* fold_flags[i] = true when player i folds, false instead */
     bool[MAX_PLAYERS] fold_flags;
+    
+
+    // CARD CHANGE PHASE VARIABLES //
+    /* for each player tracks the cards marked for change after the first stake phase */
+    bool[HAND_SIZE][MAX_PLAYERS] changed_cards;
+    /* tracks the number of changed cards for each player */
+    uint8[MAX_PLAYERS] number_of_changed_cards;
 
 
     // VERIFY PHASE VARIABLES //
@@ -58,8 +65,9 @@ contract Mental_Poker {
 
     // EVENTS //
     event shuffle_event(uint8 turn_index);
-    event draw_event(uint8 turn_index, uint8 draw_index, uint8 topdeck_index, uint8 hand_size);
+    event draw_event(uint8 turn_index, uint8 draw_index, uint8 topdeck_index, uint8 num_cards);
     event stake_event(uint8 turn_index);
+    event card_change_event(uint8 turn_index);
     event key_reveal_event();
     event optimistic_verify_event();
     event pay_to_verify_event();
@@ -72,6 +80,8 @@ contract Mental_Poker {
     function get_enc_keys() public view returns(uint256[MAX_PLAYERS] memory) { return enc_keys; }
     
     function get_dec_keys() public view returns(uint256[MAX_PLAYERS] memory) { return dec_keys; }
+    
+    function get_cards_owner() public view returns(uint8[DECK_SIZE] memory) { return cards_owner; }
 
 
     constructor() {
@@ -100,6 +110,11 @@ contract Mental_Poker {
 
             for (uint8 j; j<DECK_SIZE; j++)
                 revealed_cards[i][j] = 0;
+            
+            for (uint8 j; j<HAND_SIZE; j++)
+                changed_cards[i][j] = false;
+            
+            number_of_changed_cards[i] = 0;
 
             cards_owner[i] = MAX_PLAYERS;
 
@@ -115,7 +130,7 @@ contract Mental_Poker {
         output = 0;
     }
 
-function next() private {
+    function next() private {
         if (status == Status.matchmaking) {
             // If there are enough players game can start
             if (players_addresses[players_addresses.length-1] != address(0)) {
@@ -124,10 +139,10 @@ function next() private {
             }
         }
         else if (status == Status.shuffle) {
-            // Draw is always performed starting from player 0 and ending with player n-1
+            // Shuffle is always performed starting from player 0 and ending with player n-1
             turn_index += 1;
             if (turn_index >= MAX_PLAYERS) {
-                status = Status.draw_card;
+                status = Status.draw_card_1;
                 draw_index = 0;
                 turn_index = 1;
                 emit draw_event(turn_index, draw_index, topdeck_index, HAND_SIZE);
@@ -136,18 +151,18 @@ function next() private {
                 emit shuffle_event(turn_index);
             }
         }
-        else if (status == Status.draw_card) {
+        else if (status == Status.draw_card_1) {
             if (turn_index == draw_index) {
+                topdeck_index += HAND_SIZE;
                 draw_index += 1;
                 if (draw_index >= MAX_PLAYERS) {
-                    status = Status.stake;
+                    status = Status.stake_1;
                     //last_raise_index = 0;
                     turn_index = 0;
                     emit stake_event(turn_index);
                 }
                 else {
                     turn_index = (draw_index + 1) % MAX_PLAYERS;
-                    topdeck_index += HAND_SIZE;
                     emit draw_event(turn_index, draw_index, topdeck_index, HAND_SIZE); 
                 }
             }
@@ -156,7 +171,77 @@ function next() private {
                 emit draw_event(turn_index, draw_index, topdeck_index, HAND_SIZE); 
             }
         }
-        else if (status == Status.stake) {
+        else if (status == Status.stake_1) {
+            turn_index = (turn_index + 1) % MAX_PLAYERS;
+
+            if (turn_index != last_raise_index) {
+                if (fold_flags[turn_index])
+                    next();
+                else {
+                    bool is_only_one_player_left = true;
+                    for (uint8 i; i<MAX_PLAYERS; i++) {
+                        if (i != turn_index && fold_flags[i] == false) {
+                            is_only_one_player_left = false;
+                            break;
+                        }
+                    }
+
+                    if (is_only_one_player_left) {
+                        emit stake_event(MAX_PLAYERS);
+                        turn_index = 0;
+                        status = Status.card_change;
+                        emit card_change_event(turn_index);
+                    }
+                    else
+                        emit stake_event(turn_index);
+                }
+            }
+            else {
+                emit stake_event(MAX_PLAYERS);
+                turn_index = 0;
+                status = Status.card_change;
+                emit card_change_event(turn_index);
+            }
+        }
+        else if (status == Status.card_change) {
+            // Change card is always performed starting from player 0 and ending with player n-1
+            turn_index += 1;
+            if (turn_index >= MAX_PLAYERS) {
+                status = Status.draw_card_2;
+                for (uint8 i; i<MAX_PLAYERS; i++) {
+                    if (fold_flags[i] == false && number_of_changed_cards[i] > 0) {
+                        draw_index = i;
+                        turn_index = (draw_index + 1) % MAX_PLAYERS;
+                        break;
+                    }
+                }
+                emit draw_event(turn_index, draw_index, topdeck_index, number_of_changed_cards[draw_index]);
+            }
+            else {
+                emit card_change_event(turn_index);
+            }
+        }
+        else if (status == Status.draw_card_2) {
+            if (turn_index == draw_index) {
+                topdeck_index += number_of_changed_cards[draw_index];
+                draw_index += 1;
+                if (draw_index >= MAX_PLAYERS) {
+                    status = Status.stake_2;
+                    //last_raise_index = 0;
+                    turn_index = 0;
+                    emit stake_event(turn_index);
+                }
+                else {
+                    turn_index = (draw_index + 1) % MAX_PLAYERS;
+                    emit draw_event(turn_index, draw_index, topdeck_index, number_of_changed_cards[draw_index]);
+                }
+            }
+            else {
+                turn_index = (turn_index + 1) % MAX_PLAYERS;
+                emit draw_event(turn_index, draw_index, topdeck_index, number_of_changed_cards[draw_index]); 
+            }
+        }
+        else if (status == Status.stake_2) {
             turn_index = (turn_index + 1) % MAX_PLAYERS;
 
             if (turn_index != last_raise_index) {
@@ -240,7 +325,7 @@ function next() private {
                 players_addresses[i] = msg.sender;
                 break;
             }
-}
+        }
 
         next();
     }
@@ -293,7 +378,7 @@ function next() private {
 
         uint256[DECK_SIZE] memory deck;
 
-        if (status == Status.draw_card) {
+        if (status == Status.draw_card_1 || status == Status.draw_card_2) {
             for (uint8 i; i<DECK_SIZE; i++) {
                 if (cards_owner[i] == MAX_PLAYERS)
                     deck[i] = shuffle_steps[MAX_PLAYERS-1][i];
@@ -317,8 +402,8 @@ function next() private {
         for (uint8 i; i<DECK_SIZE; i++) {
             if (cards_owner[i] == MAX_PLAYERS)
                 deck[i] = shuffle_steps[MAX_PLAYERS-1][i];
-        else {
-            uint8 prev_index;
+            else {
+                uint8 prev_index;
                 if (cards_owner[i] == 0)
                     prev_index = MAX_PLAYERS-1;
                 else
@@ -334,21 +419,21 @@ function next() private {
 
     // DRAW PHASE FUNCTIONS //
     function reveal_cards(uint256[] memory decripted_cards) public {
-        require(status == Status.draw_card && turn_index != draw_index);
+        require((status == Status.draw_card_1 && decripted_cards.length == HAND_SIZE) || (status == Status.draw_card_2 && decripted_cards.length < HAND_SIZE));
+        require(turn_index != draw_index);
         require(msg.sender == players_addresses[turn_index]);
-        require(decripted_cards.length == HAND_SIZE);
 
-        for (uint8 i; i<HAND_SIZE; i++) {
+        for (uint8 i; i<decripted_cards.length; i++) {
             revealed_cards[turn_index][topdeck_index + i] = decripted_cards[i];
-        cards_owner[topdeck_index+i] = draw_index;
+            cards_owner[topdeck_index+i] = draw_index;
         }
 
         next();
     }
 
     function draw() public {
-        require(status == Status.draw_card && turn_index == draw_index);
-        require(msg.sender == players_addresses[draw_index]);
+        require(status == Status.draw_card_1 || status == Status.draw_card_2);
+        require(turn_index == draw_index);
 
         next();
     }
@@ -356,7 +441,7 @@ function next() private {
 
     // STAKE PHASE FUNCTIONS //
         function bet() public payable {
-        require(status == Status.stake);
+        require(status == Status.stake_1 || status == Status.stake_2);
         require(msg.sender == players_addresses[turn_index]);
         require(msg.value > bets[last_raise_index] - bets[turn_index]);
 
@@ -368,7 +453,7 @@ function next() private {
     }
 
     function call() public payable{
-        require(status == Status.stake);
+        require(status == Status.stake_1 || status == Status.stake_2);
         require(msg.sender == players_addresses[turn_index]);
         require(bets[last_raise_index] - bets[turn_index] > 0);
         require(msg.value == bets[last_raise_index] - bets[turn_index]);
@@ -379,7 +464,7 @@ function next() private {
     }
 
     function check() public {
-        require(status == Status.stake);
+        require(status == Status.stake_1 || status == Status.stake_2);
         require(msg.sender == players_addresses[turn_index]);
         require(bets[last_raise_index] == 0);
 
@@ -387,7 +472,7 @@ function next() private {
     }
 
     function fold() public {
-        require(status == Status.stake);
+        require(status == Status.stake_1 || status == Status.stake_2);
         require(msg.sender == players_addresses[turn_index]);
 
         fold_flags[turn_index] = true;
@@ -400,6 +485,30 @@ function next() private {
     function get_bets() public view returns(uint256[MAX_PLAYERS] memory) { return bets; }
 
     function get_fold_flags() public view returns(bool[MAX_PLAYERS] memory) { return fold_flags; }
+
+
+    // CARD CHANGE PHASE FUNCTIONS //
+    function card_change(bool[] memory cards_to_change) public {
+        require(status == Status.card_change);
+        require(msg.sender == players_addresses[turn_index]);
+        require(cards_to_change.length == HAND_SIZE);
+        
+        for (uint8 i; i<HAND_SIZE; i++) {
+            if (cards_to_change[i]) {
+                changed_cards[turn_index][i] = true;
+                number_of_changed_cards[turn_index]++;
+                cards_owner[turn_index * HAND_SIZE + i] = MAX_PLAYERS;
+            }
+        }
+        
+        require(number_of_changed_cards[turn_index] < HAND_SIZE);
+
+        next();
+    }
+
+    function get_changed_cards() public view returns(bool[HAND_SIZE][MAX_PLAYERS] memory) { return changed_cards; }
+
+    function get_number_of_changed_cards() public view returns(uint8[MAX_PLAYERS] memory) { return number_of_changed_cards; }
 
 
     // OPTIMISTIC VERIFY PHASE FUNCTIONS //
@@ -516,11 +625,11 @@ function next() private {
         //if (output == proof) {
         if (result == proof) {
             // refund everyone expect client who reported
-output = 2;
+            output = 2;
             return;
         } else {
             // refund everyone except player_index
-output = 1;
+            output = 1;
             return;
         }
     }

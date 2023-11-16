@@ -2,7 +2,7 @@ from web3 import Web3, HTTPProvider
 import json
 import time
 
-DEBUG = False
+DEBUG = True
 
 class Contract_communication_handler:
 
@@ -93,15 +93,15 @@ class Contract_communication_handler:
 			_turn_index = logs[-1]['args']['turn_index']
 			draw_index = logs[-1]['args']['draw_index']
 			topdeck_index = logs[-1]['args']['topdeck_index']
-			hand_size = logs[-1]['args']['hand_size']
+			num_cards = logs[-1]['args']['num_cards']
 
 			if DEBUG: print('Past event caught (from block', block_number, ').',
 		          	        ' {turn_index:', _turn_index,
 		 		            ', draw_index:', draw_index,
 				            ', topdeck_index:', topdeck_index,
-				            ', hand_size:', hand_size, '}')
+				            ', num_cards:', num_cards, '}')
 			if _turn_index == turn_index:
-				return draw_index, topdeck_index, hand_size
+				return draw_index, topdeck_index, num_cards
 		
 		# otherwise listen for it
 		event_filter = self.contract.events.draw_event.create_filter(fromBlock='latest')
@@ -111,15 +111,15 @@ class Contract_communication_handler:
 				_turn_index = event['args']['turn_index']
 				draw_index = event['args']['draw_index']
 				topdeck_index = event['args']['topdeck_index']
-				hand_size = event['args']['hand_size']
+				num_cards = event['args']['num_cards']
 
 				if DEBUG: print('New event caught.',
 		                        ' {turn_index:', _turn_index,
 					            ', draw_index:', draw_index,
 					            ', topdeck_index:', topdeck_index,
-					            ', hand_size:', hand_size, '}')
+					            ', num_cards:', num_cards, '}')
 				if _turn_index == turn_index:
-					return draw_index, topdeck_index, hand_size
+					return draw_index, topdeck_index, num_cards
 				
 			time.sleep(1)
 
@@ -151,6 +151,31 @@ class Contract_communication_handler:
 				
 			time.sleep(1)
 	
+	def catch_card_change_event(self, turn_index):
+		# check if my last transaction triggered the event
+		transaction = self.connection.eth.get_transaction(self.last_transaction)
+		block_number = transaction['blockNumber']
+		logs = self.contract.events.card_change_event.get_logs(fromBlock=block_number)
+		if len(logs) >= 1:
+			_turn_index = logs[-1]['args']['turn_index']
+
+			if DEBUG: print('Past event caught (from block', block_number, '). {turn_index:', _turn_index, '}')
+			if _turn_index == turn_index:
+				return
+		
+		# otherwise listen for it
+		event_filter = self.contract.events.card_change_event.create_filter(fromBlock='latest')
+
+		while True:
+			for event in event_filter.get_new_entries():
+				_turn_index = event['args']['turn_index']
+
+				if DEBUG: print('New event caught. {turn_index:', _turn_index, '}')
+				if _turn_index == turn_index:
+					return
+				
+			time.sleep(1)
+
 	def catch_key_reveal_event(self):
 
 		# check if my last transaction triggered the event
@@ -277,6 +302,12 @@ class Contract_communication_handler:
 		except:
 			exit('Error while calling function "get_deck".')
 	
+	def get_cards_owner(self):
+		try:
+			return self.contract.functions.get_cards_owner().call()
+		except:
+			exit('Error while calling function "get_cards_owner".')
+	
 	def shuffle(self, encrypted_deck):
 		try:
 			self.last_transaction = self.contract.functions.shuffle(encrypted_deck).transact({'from': self.wallet_address})
@@ -336,6 +367,18 @@ class Contract_communication_handler:
 			return self.contract.functions.get_fold_flags().call({'from': self.wallet_address})
 		except:
 			exit('Error while calling function "get_fold_flags".')
+	
+	def card_change(self, cards_to_change):
+		try:
+			return self.contract.functions.card_change(cards_to_change).transact({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "card_change".')
+	
+	def get_changed_cards(self):
+		try:
+			return self.contract.functions.get_changed_cards().call()
+		except:
+			exit('Error while calling function "get_changed_cards".')
 	
 	def key_reveal(self, e, d):
 		try:

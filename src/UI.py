@@ -1,4 +1,5 @@
 from Card import *
+from Poker import *
 import os
 
 suit_symbols_dict = {
@@ -116,3 +117,53 @@ def print_options(assigned_index, last_raise_index, bets):
                 return (choice, 0)
             case _:
                 print('Input not accepted, try again\n')
+
+def print_card_change():
+    cards_to_change = [False] * 5
+
+    while (True):
+        print('\nDo you want to change one or more cards?')
+        print('0. Yes')
+        print('1. No')
+
+        match input():
+            case '0':
+                choices = []
+                i = 0
+                while i < 4:
+                    print('\nInsert a value between 1 and 5 to change the corresponding card (insert q to quit)')
+                    if i == 3:
+                        print('Last possible change')
+                    else:
+                        print(f'{4-i} changes left')
+                    choice = input()
+                    if choice == 'q':
+                        break
+                    elif int(choice) > 0 and int(choice) <= 5:
+                        if int(choice) not in choices:
+                            choices.append(int(choice))
+                            i += 1
+                        else:
+                            print(f'You already chose to change the card n° {int(choice)}\n')
+                    else:
+                        print('Input not accepted, try again\n')
+
+                for choice in choices:
+                    cards_to_change[choice-1] = True
+                
+                return cards_to_change
+            
+            case '1':
+                print('\nYou chose to keep all your cards')
+                return cards_to_change
+                
+            case _:
+                print('Input not accepted, try again\n')
+
+
+def print_winner(winner, winner_hand, assigned_index):
+    if winner == assigned_index:
+        print('\nYou win')
+    else:
+        print(f'\nWinner: {winner}')
+    print(hand_ranking_dict[winner_hand[0]])
