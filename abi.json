@@ -11,33 +11,6 @@
 		"type": "event"
 	},
 	{
-		"inputs": [],
-		"name": "bet",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "call",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bool[]",
-				"name": "cards_to_change",
-				"type": "bool[]"
-			}
-		],
-		"name": "card_change",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -49,20 +22,6 @@
 		],
 		"name": "card_change_event",
 		"type": "event"
-	},
-	{
-		"inputs": [],
-		"name": "check",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "draw",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
 	},
 	{
 		"anonymous": false,
@@ -96,48 +55,10 @@
 		"type": "event"
 	},
 	{
-		"inputs": [],
-		"name": "fold",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "e",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "d",
-				"type": "uint256"
-			}
-		],
-		"name": "key_reveal",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [],
 		"name": "key_reveal_event",
 		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint8",
-				"name": "winner_index",
-				"type": "uint8"
-			}
-		],
-		"name": "optimistic_verify",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
 	},
 	{
 		"anonymous": false,
@@ -146,118 +67,10 @@
 		"type": "event"
 	},
 	{
-		"inputs": [],
-		"name": "participate",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [],
 		"name": "pay_to_verify_event",
 		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint8",
-				"name": "index",
-				"type": "uint8"
-			}
-		],
-		"name": "report_deck_coding",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "report_draw",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint8",
-				"name": "player_index",
-				"type": "uint8"
-			},
-			{
-				"internalType": "uint256",
-				"name": "proof",
-				"type": "uint256"
-			}
-		],
-		"name": "report_e_and_d",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "report_shuffle",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "reset",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256[]",
-				"name": "decripted_cards",
-				"type": "uint256[]"
-			}
-		],
-		"name": "reveal_cards",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256[52]",
-				"name": "encrypted_deck",
-				"type": "uint256[52]"
-			}
-		],
-		"name": "shuffle",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_n",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint8[52]",
-				"name": "_deck_coding",
-				"type": "uint8[52]"
-			},
-			{
-				"internalType": "uint256[52]",
-				"name": "encrypted_deck",
-				"type": "uint256[52]"
-			}
-		],
-		"name": "shuffle_dealer",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
 	},
 	{
 		"anonymous": false,
@@ -286,6 +99,72 @@
 		"type": "event"
 	},
 	{
+		"inputs": [],
+		"name": "HAND_SIZE",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "MAX_PLAYERS",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "PARTICIPATION_FEE",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "bet",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "call",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bool[]",
+				"name": "cards_to_change",
+				"type": "bool[]"
+			}
+		],
+		"name": "card_change",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "uint256",
@@ -306,6 +185,20 @@
 	},
 	{
 		"inputs": [],
+		"name": "check",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "draw",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "draw_index",
 		"outputs": [
 			{
@@ -315,6 +208,13 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "fold",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -461,29 +361,21 @@
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "HAND_SIZE",
-		"outputs": [
+		"inputs": [
 			{
-				"internalType": "uint8",
-				"name": "",
-				"type": "uint8"
+				"internalType": "uint256",
+				"name": "e",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "d",
+				"type": "uint256"
 			}
 		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "MAX_PLAYERS",
-		"outputs": [
-			{
-				"internalType": "uint8",
-				"name": "",
-				"type": "uint8"
-			}
-		],
-		"stateMutability": "view",
+		"name": "key_reveal",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -497,6 +389,19 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint8",
+				"name": "winner_index",
+				"type": "uint8"
+			}
+		],
+		"name": "optimistic_verify",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -514,15 +419,9 @@
 	},
 	{
 		"inputs": [],
-		"name": "PARTICIPATION_FEE",
-		"outputs": [
-			{
-				"internalType": "uint8",
-				"name": "",
-				"type": "uint8"
-			}
-		],
-		"stateMutability": "view",
+		"name": "participate",
+		"outputs": [],
+		"stateMutability": "payable",
 		"type": "function"
 	},
 	{
@@ -547,6 +446,44 @@
 	{
 		"inputs": [
 			{
+				"internalType": "uint8",
+				"name": "index",
+				"type": "uint8"
+			}
+		],
+		"name": "report_deck_coding",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "report_draw",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint8",
+				"name": "player_index",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint256",
+				"name": "proof",
+				"type": "uint256"
+			}
+		],
+		"name": "report_e_and_d",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "uint256",
 				"name": "divisor",
 				"type": "uint256"
@@ -555,6 +492,33 @@
 		"name": "report_n",
 		"outputs": [],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "report_shuffle",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "reset",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "decripted_cards",
+				"type": "uint256[]"
+			}
+		],
+		"name": "reveal_cards",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -579,6 +543,42 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[52]",
+				"name": "encrypted_deck",
+				"type": "uint256[52]"
+			}
+		],
+		"name": "shuffle",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_n",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint8[52]",
+				"name": "_deck_coding",
+				"type": "uint8[52]"
+			},
+			{
+				"internalType": "uint256[52]",
+				"name": "encrypted_deck",
+				"type": "uint256[52]"
+			}
+		],
+		"name": "shuffle_dealer",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{

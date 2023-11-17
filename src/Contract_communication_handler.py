@@ -151,7 +151,8 @@ class Contract_communication_handler:
 				
 			time.sleep(1)
 	
-	def catch_card_change_event(self, turn_index):
+	def catch_card_change_event(self, turn_index, end_index):
+
 		# check if my last transaction triggered the event
 		transaction = self.connection.eth.get_transaction(self.last_transaction)
 		block_number = transaction['blockNumber']
@@ -160,8 +161,8 @@ class Contract_communication_handler:
 			_turn_index = logs[-1]['args']['turn_index']
 
 			if DEBUG: print('Past event caught (from block', block_number, '). {turn_index:', _turn_index, '}')
-			if _turn_index == turn_index:
-				return
+			if _turn_index == turn_index or _turn_index == end_index:
+				return _turn_index
 		
 		# otherwise listen for it
 		event_filter = self.contract.events.card_change_event.create_filter(fromBlock='latest')
@@ -171,8 +172,8 @@ class Contract_communication_handler:
 				_turn_index = event['args']['turn_index']
 
 				if DEBUG: print('New event caught. {turn_index:', _turn_index, '}')
-				if _turn_index == turn_index:
-					return
+				if _turn_index == turn_index or _turn_index == end_index:
+					return _turn_index
 				
 			time.sleep(1)
 

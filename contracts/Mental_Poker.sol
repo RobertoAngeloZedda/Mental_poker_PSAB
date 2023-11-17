@@ -98,6 +98,9 @@ contract Mental_Poker {
     function reset() public {
         status = Status.matchmaking;
 
+        for (uint8 i; i<DECK_SIZE; i++)
+            cards_owner[i] = MAX_PLAYERS;
+        
         for (uint8 i; i<MAX_PLAYERS; i++) {
             players_addresses[i] = address(0);
             bets[i] = 0;
@@ -115,8 +118,6 @@ contract Mental_Poker {
                 changed_cards[i][j] = false;
             
             number_of_changed_cards[i] = 0;
-
-            cards_owner[i] = MAX_PLAYERS;
 
             verify_results[i] = MAX_PLAYERS;
         }
@@ -188,9 +189,12 @@ contract Mental_Poker {
 
                     if (is_only_one_player_left) {
                         emit stake_event(MAX_PLAYERS);
-                        turn_index = 0;
                         status = Status.card_change;
-                        emit card_change_event(turn_index);
+                        emit card_change_event(MAX_PLAYERS);
+                        status = Status.draw_card_2;
+                        emit draw_event(turn_index, draw_index, topdeck_index, 0);
+                        status = Status.key_reveal;
+                        emit key_reveal_event();
                     }
                     else
                         emit stake_event(turn_index);
@@ -198,21 +202,21 @@ contract Mental_Poker {
             }
             else {
                 emit stake_event(MAX_PLAYERS);
-                turn_index = 0;
                 status = Status.card_change;
                 emit card_change_event(turn_index);
             }
         }
         else if (status == Status.card_change) {
-            // Change card is always performed starting from player 0 and ending with player n-1
-            turn_index += 1;
-            if (turn_index >= MAX_PLAYERS) {
+            turn_index = (turn_index + 1) % MAX_PLAYERS;
+
+            if (turn_index == last_raise_index) {    
+                emit card_change_event(MAX_PLAYERS);
                 status = Status.draw_card_2;
                 for (uint8 i; i<MAX_PLAYERS; i++) {
                     if (fold_flags[i] == false && number_of_changed_cards[i] > 0) {
                         draw_index = i;
                         turn_index = (draw_index + 1) % MAX_PLAYERS;
-                        break;
+                        break; 
                     }
                 }
                 emit draw_event(turn_index, draw_index, topdeck_index, number_of_changed_cards[draw_index]);
@@ -227,9 +231,7 @@ contract Mental_Poker {
                 draw_index += 1;
                 if (draw_index >= MAX_PLAYERS) {
                     status = Status.stake_2;
-                    //last_raise_index = 0;
-                    turn_index = 0;
-                    emit stake_event(turn_index);
+                    emit stake_event(last_raise_index);
                 }
                 else {
                     turn_index = (draw_index + 1) % MAX_PLAYERS;
@@ -372,7 +374,6 @@ contract Mental_Poker {
     }
 
     function get_deck() public view returns (uint256[DECK_SIZE] memory) {
-
         if (status == Status.shuffle && turn_index > 0)
             return shuffle_steps[turn_index-1];
 
@@ -434,6 +435,7 @@ contract Mental_Poker {
     function draw() public {
         require(status == Status.draw_card_1 || status == Status.draw_card_2);
         require(turn_index == draw_index);
+        require(msg.sender == players_addresses[draw_index]);
 
         next();
     }

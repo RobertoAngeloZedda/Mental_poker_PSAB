@@ -47,18 +47,6 @@ def calculate_next_turn(turn_index, fold_flags, max_players):
     else:
         return new_turn_index
 
-def calculate_next_turn_linear(turn_index, fold_flags, max_players):
-    new_turn_index = turn_index + 1
-
-    if new_turn_index == max_players:
-        return new_turn_index
-
-    # skip players if they folded
-    if fold_flags[new_turn_index]:
-        return calculate_next_turn(new_turn_index, fold_flags, max_players)
-    else:
-        return new_turn_index
-
 def generate_deck_encryption(n):
     # Choosing only quadratic residues to map the cards to represent the deck
     deck_coding = []
@@ -84,11 +72,12 @@ def calculate_hands():
     hands_filled = 0
     for i in range(len(cards_owner)):
         player_index = cards_owner[i]
-        hands[player_index].append(deck[i])
-        if len(hands[player_index]) == hand_size:
-            hands_filled +=1
-            if hands_filled == max_players:
-                break
+        if player_index < max_players:
+            hands[player_index].append(deck[i])
+            if len(hands[player_index]) == hand_size:
+                hands_filled +=1
+                if hands_filled == max_players:
+                    break
     
     return hands
 
@@ -164,7 +153,7 @@ def deal_cards(n, d):
     return player_hand
 
 def stake_round():
-    turn_index = 0
+    turn_index = cch.get_last_raise_index()
     while turn_index < max_players:
         if DEBUG: print('Listening for stake events')
         turn_index = cch.catch_stake_event(turn_index, max_players)
@@ -202,54 +191,60 @@ def stake_round():
         turn_index = calculate_next_turn(turn_index, fold_flags, max_players)
 
 def card_change():
-    turn_index = 0
+    turn_index = cch.get_last_raise_index()
     while turn_index < max_players:
         if DEBUG: print('Listening for card change events')
-        cch.catch_card_change_event(turn_index)
+        turn_index = cch.catch_card_change_event(turn_index, max_players)
+        
+        # when card_change phase is over 'turn_index = max_players'
+        if turn_index >= max_players:
+            break
         
         fold_flags = cch.get_fold_flags()
 
-        if turn_index >= max_players:
-            break
-
-        if turn_index == assigned_index:
-            if not fold_flags[assigned_index]:
-                cards_to_change = print_card_change()
-                cch.card_change(cards_to_change)
+        if turn_index == assigned_index and not fold_flags[assigned_index]:
+            cards_to_change = print_card_change()
+            cch.card_change(cards_to_change)
         else:
             print(f'\nWaiting for Player {turn_index}\'s action...')
         
-        turn_index = calculate_next_turn_linear(turn_index, fold_flags, max_players)
+        turn_index = calculate_next_turn(turn_index, fold_flags, max_players)
 
-def deal_replacement_cards(n, d, player_hand):
+def deal_replacement_cards(n, d):
+    new_hand = []
+    
+    if DEBUG: print('Deal cards')
+
     for _ in range(max_players):
         if DEBUG: print('Listening for draw events')
         draw_index, topdeck_index, num_cards = cch.catch_draw_event(assigned_index)
 
-        changed_cards = cch.get_changed_cards()
+        if num_cards == 0:
+            if DEBUG: print('num_cards = 0')
+            return player_hand
 
         deck = cch.get_deck()
 
-        encrypted_cards = deck[topdeck_index : (topdeck_index + num_cards)]
-
-        cards = [sra_decrypt(card, d, n) for card in encrypted_cards]
-
         # If client has to draw
         if draw_index == assigned_index:
-            i = 0
-            popped_cards = 0
-            for j in range(len(changed_cards[assigned_index])):
-                if changed_cards[assigned_index][j]:
-                    player_hand.pop(j - popped_cards)
-                    player_hand.append(int_to_card(cards[i], deck_map))
-                    i += 1
-                    popped_cards += 1
+            hand_size = cch.get_hand_size()
+            cards_owner = cch.get_cards_owner()
+
+            for i, owner in enumerate(cards_owner):
+                if owner == assigned_index:
+                    new_hand.append(int_to_card(sra_decrypt(deck[i], d, n), deck_map))
+                    if len(new_hand) == hand_size:
+                        break
+
             cch.draw()
         # If someone else has to draw
         else:
+            encrypted_cards = deck[topdeck_index : (topdeck_index + num_cards)]
+            cards = [sra_decrypt(card, d, n) for card in encrypted_cards]
+            
             cch.reveal_cards(cards)
         
-    return player_hand
+    return new_hand
 
 def key_reveal(e, d):
     if DEBUG: print('Listening for key reveal events')
@@ -345,7 +340,7 @@ if __name__ == '__main__':
     
     card_change()
     
-    player_hand = deal_replacement_cards(n, d, player_hand)
+    player_hand = deal_replacement_cards(n, d)
     
     stake_round()
 
