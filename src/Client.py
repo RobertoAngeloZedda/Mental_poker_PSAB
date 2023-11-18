@@ -220,7 +220,6 @@ def deal_replacement_cards(n, d):
         draw_index, topdeck_index, num_cards = cch.catch_draw_event(assigned_index)
 
         if num_cards == 0:
-            if DEBUG: print('num_cards = 0')
             return player_hand
 
         deck = cch.get_deck()

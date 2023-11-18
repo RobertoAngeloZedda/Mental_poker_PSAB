@@ -211,31 +211,60 @@ contract Mental_Poker {
 
             if (turn_index == last_raise_index) {    
                 emit card_change_event(MAX_PLAYERS);
-                status = Status.draw_card_2;
+
+                uint8 num_cards;
+                bool someone_has_to_draw;
                 for (uint8 i; i<MAX_PLAYERS; i++) {
                     if (fold_flags[i] == false && number_of_changed_cards[i] > 0) {
                         draw_index = i;
                         turn_index = (draw_index + 1) % MAX_PLAYERS;
+                        someone_has_to_draw = true;
                         break; 
                     }
                 }
-                emit draw_event(turn_index, draw_index, topdeck_index, number_of_changed_cards[draw_index]);
+                if (someone_has_to_draw) {
+                    num_cards = number_of_changed_cards[draw_index];
+                    status = Status.draw_card_2;
+                }
+                
+                emit draw_event(turn_index, draw_index, topdeck_index, num_cards);
+                
+                if (!someone_has_to_draw) {
+                    status = Status.stake_2;
+                    emit stake_event(turn_index);
+                }
             }
             else {
-                emit card_change_event(turn_index);
+                if (fold_flags[turn_index])
+                    next();
+                else
+                    emit card_change_event(turn_index);
             }
         }
         else if (status == Status.draw_card_2) {
             if (turn_index == draw_index) {
                 topdeck_index += number_of_changed_cards[draw_index];
-                draw_index += 1;
-                if (draw_index >= MAX_PLAYERS) {
-                    status = Status.stake_2;
-                    emit stake_event(last_raise_index);
+
+                uint8 num_cards;
+                bool someone_has_to_draw;
+                for (uint8 i=draw_index+1; i<MAX_PLAYERS; i++) {
+                    if (fold_flags[i] == false && number_of_changed_cards[i] > 0) {
+                        draw_index = i;
+                        turn_index = (draw_index + 1) % MAX_PLAYERS;
+                        someone_has_to_draw = true;
+                        break; 
+                    }
                 }
-                else {
-                    turn_index = (draw_index + 1) % MAX_PLAYERS;
-                    emit draw_event(turn_index, draw_index, topdeck_index, number_of_changed_cards[draw_index]);
+
+                if (someone_has_to_draw)
+                    num_cards = number_of_changed_cards[draw_index];
+                
+                emit draw_event(turn_index, draw_index, topdeck_index, num_cards);
+                
+                if (!someone_has_to_draw) {
+                    status = Status.stake_2;
+                    turn_index = last_raise_index;
+                    emit stake_event(turn_index);
                 }
             }
             else {

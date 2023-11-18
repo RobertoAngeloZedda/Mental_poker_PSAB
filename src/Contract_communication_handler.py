@@ -100,7 +100,7 @@ class Contract_communication_handler:
 		 		            ', draw_index:', draw_index,
 				            ', topdeck_index:', topdeck_index,
 				            ', num_cards:', num_cards, '}')
-			if _turn_index == turn_index:
+			if _turn_index == turn_index or num_cards == 0:
 				return draw_index, topdeck_index, num_cards
 		
 		# otherwise listen for it
@@ -118,7 +118,7 @@ class Contract_communication_handler:
 					            ', draw_index:', draw_index,
 					            ', topdeck_index:', topdeck_index,
 					            ', num_cards:', num_cards, '}')
-				if _turn_index == turn_index:
+				if _turn_index == turn_index or num_cards == 0:
 					return draw_index, topdeck_index, num_cards
 				
 			time.sleep(1)
