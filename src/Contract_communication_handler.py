@@ -2,7 +2,7 @@ from web3 import Web3, HTTPProvider
 import json
 import time
 
-DEBUG = True
+DEBUG = False
 
 class Contract_communication_handler:
 

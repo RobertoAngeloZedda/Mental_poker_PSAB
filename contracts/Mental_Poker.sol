@@ -50,6 +50,8 @@ contract Mental_Poker {
     uint256[MAX_PLAYERS] bets;
     /* fold_flags[i] = true when player i folds, false instead */
     bool[MAX_PLAYERS] fold_flags;
+    /* holds the totale amount of bets after each stake phase */
+    uint256 public pot;
     
 
     // CARD CHANGE PHASE VARIABLES //
@@ -128,6 +130,8 @@ contract Mental_Poker {
         
         last_raise_index = 0;
 
+        pot = 0;
+
         output = 0;
     }
 
@@ -135,6 +139,8 @@ contract Mental_Poker {
         if (status == Status.matchmaking) {
             // If there are enough players game can start
             if (players_addresses[players_addresses.length-1] != address(0)) {
+                pot = PARTICIPATION_FEE;
+
                 status = Status.shuffle;
                 emit shuffle_event(turn_index);
             }
@@ -188,6 +194,11 @@ contract Mental_Poker {
                     }
 
                     if (is_only_one_player_left) {
+                        for (uint8 i; i<MAX_PLAYERS; i++) {
+                            pot += bets[i];
+                            bets[i] = 0;
+                        }
+
                         emit stake_event(MAX_PLAYERS);
                         status = Status.card_change;
                         emit card_change_event(MAX_PLAYERS);
@@ -201,6 +212,11 @@ contract Mental_Poker {
                 }
             }
             else {
+                for (uint8 i; i<MAX_PLAYERS; i++) {
+                    pot += bets[i];
+                    bets[i] = 0;
+                }
+                
                 emit stake_event(MAX_PLAYERS);
                 status = Status.card_change;
                 emit card_change_event(turn_index);
@@ -288,6 +304,9 @@ contract Mental_Poker {
                     }
 
                     if (is_only_one_player_left) {
+                        for (uint8 i; i<MAX_PLAYERS; i++)
+                            pot += bets[i];
+                        
                         emit stake_event(MAX_PLAYERS);
                         status = Status.key_reveal;
                         emit key_reveal_event();
@@ -297,6 +316,9 @@ contract Mental_Poker {
                 }
             }
             else {
+                for (uint8 i; i<MAX_PLAYERS; i++)
+                    pot += bets[i];
+
                 emit stake_event(MAX_PLAYERS);
                 status = Status.key_reveal;
                 emit key_reveal_event();
@@ -329,14 +351,9 @@ contract Mental_Poker {
                     return;
                 }
             }*/
-
-            uint256 winnings = 0;
-            for (uint8 i; i<MAX_PLAYERS; i++){
-                winnings += bets[i];
-            }
             
             //payable(players_addresses[winner_index]).transfer(winnings + PARTICIPATION_FEE);
-            payable(players_addresses[verify_results[0]]).transfer(winnings + PARTICIPATION_FEE);
+            payable(players_addresses[verify_results[0]]).transfer(pot);
             emit award_event();
         }
     }
@@ -449,7 +466,7 @@ contract Mental_Poker {
 
     // DRAW PHASE FUNCTIONS //
     function reveal_cards(uint256[] memory decripted_cards) public {
-        require((status == Status.draw_card_1 && decripted_cards.length == HAND_SIZE) || (status == Status.draw_card_2 && decripted_cards.length < HAND_SIZE));
+        require((status == Status.draw_card_1 && decripted_cards.length == HAND_SIZE) || (status == Status.draw_card_2 && decripted_cards.length == number_of_changed_cards[draw_index]));
         require(turn_index != draw_index);
         require(msg.sender == players_addresses[turn_index]);
 
