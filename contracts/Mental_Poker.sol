@@ -50,7 +50,7 @@ contract Mental_Poker {
     uint256[MAX_PLAYERS] bets;
     /* fold_flags[i] = true when player i folds, false instead */
     bool[MAX_PLAYERS] fold_flags;
-    /* holds the totale amount of bets after each stake phase */
+    /* holds the total amount of bets after each stake phase */
     uint256 public pot;
     
 
@@ -94,7 +94,7 @@ contract Mental_Poker {
 
         for (uint8 i; i<MAX_PLAYERS; i++)
             verify_results[i] = MAX_PLAYERS;
-    }
+                }
 
     /* for debugging sake */
     function reset() public {
@@ -351,7 +351,7 @@ contract Mental_Poker {
                     return;
                 }
             }*/
-            
+
             //payable(players_addresses[winner_index]).transfer(winnings + PARTICIPATION_FEE);
             payable(players_addresses[verify_results[0]]).transfer(pot);
             emit award_event();
@@ -488,7 +488,7 @@ contract Mental_Poker {
     
 
     // STAKE PHASE FUNCTIONS //
-        function bet() public payable {
+    function bet() public payable {
         require(status == Status.stake_1 || status == Status.stake_2);
         require(msg.sender == players_addresses[turn_index]);
         require(msg.value > bets[last_raise_index] - bets[turn_index]);
@@ -531,7 +531,7 @@ contract Mental_Poker {
     function get_last_raise_index() public view returns(uint8) { return last_raise_index; }
 
     function get_bets() public view returns(uint256[MAX_PLAYERS] memory) { return bets; }
-
+    
     function get_fold_flags() public view returns(bool[MAX_PLAYERS] memory) { return fold_flags; }
 
 
@@ -553,8 +553,6 @@ contract Mental_Poker {
 
         next();
     }
-
-    function get_changed_cards() public view returns(bool[HAND_SIZE][MAX_PLAYERS] memory) { return changed_cards; }
 
     function get_number_of_changed_cards() public view returns(uint8[MAX_PLAYERS] memory) { return number_of_changed_cards; }
 

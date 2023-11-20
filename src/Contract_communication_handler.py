@@ -353,21 +353,27 @@ class Contract_communication_handler:
 	
 	def get_last_raise_index(self):
 		try:
-			return self.contract.functions.get_last_raise_index().call({'from': self.wallet_address})
+			return self.contract.functions.get_last_raise_index().call()
 		except:
 			exit('Error while calling function "get_last_raise_index".')
 	
 	def get_bets(self):
 		try:
-			return self.contract.functions.get_bets().call({'from': self.wallet_address})
+			return self.contract.functions.get_bets().call()
 		except:
 			exit('Error while calling function "get_bets".')
 	
 	def get_fold_flags(self):
 		try:
-			return self.contract.functions.get_fold_flags().call({'from': self.wallet_address})
+			return self.contract.functions.get_fold_flags().call()
 		except:
 			exit('Error while calling function "get_fold_flags".')
+	
+	def get_pot(self):
+		try:
+			return self.contract.functions.pot().call()
+		except:
+			exit('Error while accessing attribute "pot".')
 	
 	def card_change(self, cards_to_change):
 		try:
@@ -375,11 +381,11 @@ class Contract_communication_handler:
 		except:
 			exit('Error while calling function "card_change".')
 	
-	def get_changed_cards(self):
+	def get_number_of_changed_cards(self):
 		try:
-			return self.contract.functions.get_changed_cards().call()
+			return self.contract.functions.get_number_of_changed_cards().call()
 		except:
-			exit('Error while calling function "get_changed_cards".')
+			exit('Error while calling function "get_number_of_changed_cards".')
 	
 	def key_reveal(self, e, d):
 		try:

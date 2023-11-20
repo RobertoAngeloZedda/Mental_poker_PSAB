@@ -60,7 +60,7 @@ def generate_deck_encryption(n):
             count += 1
     return deck_coding
 
-def calculate_hands():
+def calculate_hands(max_players):
     deck = cch.get_deck()
     cards_owner = cch.get_cards_owner()
     hand_size = cch.get_hand_size
@@ -127,7 +127,7 @@ def shuffle(assigned_index):
 
     return n, e, d, deck_map
 
-def deal_cards(assigned_index, n, d):
+def deal_cards(assigned_index, max_players, n, d, deck_map):
     player_hand = []
 
     for _ in range(max_players):
@@ -151,7 +151,7 @@ def deal_cards(assigned_index, n, d):
         
     return player_hand
 
-def stake_round():
+def stake_round(assigned_index, max_players, phase):
     turn_index = cch.get_last_raise_index()
 
     # the contract communicates the stake phase is over using turn_index = max_players
@@ -166,10 +166,15 @@ def stake_round():
         clear_screen()
         print('Your hand:')
         print_hand(player_hand)
-        print_bets(max_players, assigned_index, last_raise_index, bets, fold_flags)
+        print_bets(assigned_index, max_players, last_raise_index, bets, fold_flags, phase)
+        if phase == 2:
+            print_number_of_changed_cards(max_players, cch.get_number_of_changed_cards())
+            print_pot(cch.get_pot() - cch.get_participation_fee())
 
         # when stake phase is over 'turn_index = max_players'
         if turn_index >= max_players:
+            if phase == 1:
+                print_pot(cch.get_pot() - cch.get_participation_fee())
             break
         
         # if it's this client's turn
@@ -194,7 +199,7 @@ def stake_round():
         
         turn_index = calculate_next_turn(turn_index, fold_flags, max_players)
 
-def card_change():
+def card_change(max_players):
     turn_index = cch.get_last_raise_index()
 
     # the card_change phase starts from where the stake round finished
@@ -217,7 +222,7 @@ def card_change():
         
         turn_index = calculate_next_turn(turn_index, fold_flags, max_players)
 
-def deal_replacement_cards(n, d):
+def deal_replacement_cards(assigned_index, max_players, n, d, deck_map):
     new_hand = player_hand
     
     if DEBUG: print('Deal cards')
@@ -264,7 +269,7 @@ def key_reveal(e, d):
     if DEBUG: print(cch.get_enc_keys())
     if DEBUG: print(cch.get_dec_keys())
 
-def verify():
+def verify(assigned_index, max_players, deck_map):
     if DEBUG: print('Listening for verify events')
     cch.catch_optimistic_verify_event()
 
@@ -272,7 +277,7 @@ def verify():
     hand_size = cch.get_hand_size()
     keys = cch.get_dec_keys()
     fold_flags = cch.get_fold_flags()
-    hands = calculate_hands()
+    hands = calculate_hands(max_players)
 
     for i in range(max_players):
         for j in range(hand_size):
@@ -312,10 +317,10 @@ def verify():
 
     return (winner, best_hand)
 
-def award(winner, winner_hand):
+def award(assigned_index, winner, winner_hand):
     if DEBUG: print('Listening for award events')
     cch.catch_award_event()
-    print_winner(winner, winner_hand, assigned_index)
+    print_winner(assigned_index, winner, winner_hand)
 
 if __name__ == '__main__':
 
@@ -342,18 +347,18 @@ if __name__ == '__main__':
     else:
         n, e, d, deck_map = shuffle(assigned_index)
     
-    player_hand = deal_cards(assigned_index, n, d)
+    player_hand = deal_cards(assigned_index, max_players, n, d, deck_map)
     
-    stake_round()
+    stake_round(assigned_index, max_players, 1)
     
-    card_change()
+    card_change(max_players)
     
-    player_hand = deal_replacement_cards(n, d)
+    player_hand = deal_replacement_cards(assigned_index, max_players, n, d, deck_map)
     
-    stake_round()
+    stake_round(assigned_index, max_players, 2)
 
     key_reveal(e, d)
 
-    (winner_index, winner_hand) = verify()
+    (winner_index, winner_hand) = verify(assigned_index, max_players, deck_map)
 
-    award(winner_index, winner_hand)
+    award(assigned_index, winner_index, winner_hand)

@@ -64,10 +64,12 @@ def print_hand(hand):
         print('|_______|', end=' ')
     print()
 
-def print_bets(max_players, assigned_index, last_raise_index, bets, fold_flags):
+def print_bets(assigned_index, max_players, last_raise_index, bets, fold_flags, phase):
     col_width = 16
 
-    print('\nBets:\n')
+    print(f'\nSTAKE {phase}\n')
+
+    print('Bets:\n')
     for i in range(max_players):
         if i == assigned_index:
             print(f"{'Player ' + str(i)+' (you)':^{col_width}}||", end = ' ')
@@ -88,6 +90,19 @@ def print_bets(max_players, assigned_index, last_raise_index, bets, fold_flags):
         else:
             print(f"{'':^{col_width}}||", end = ' ')
     print()
+    
+def print_number_of_changed_cards(max_players, changed_cards):
+    col_width = 16
+    
+    for i in range(max_players):
+        if changed_cards[i] == 1:
+            print(f"{'Changed ' + str(changed_cards[i]) + ' card':^{col_width}}||", end = ' ')
+        else:
+            print(f"{'Changed ' + str(changed_cards[i]) + ' cards':^{col_width}}||", end = ' ')
+    print()
+
+def print_pot(pot):
+    print(f'\nPot: {pot}\n')
 
 def print_options(assigned_index, last_raise_index, bets):
     while (True):
@@ -122,12 +137,10 @@ def print_card_change():
     cards_to_change = [False] * 5
 
     while (True):
-        print('\nDo you want to change one or more cards?')
-        print('0. Yes')
-        print('1. No')
+        print('\nDo you want to change cards? (y/n)')
 
         match input():
-            case '0':
+            case 'y':
                 choices = []
                 i = 0
                 while i < 4:
@@ -153,7 +166,7 @@ def print_card_change():
                 
                 return cards_to_change
             
-            case '1':
+            case 'n':
                 print('\nYou chose to keep all your cards')
                 return cards_to_change
                 
@@ -161,7 +174,7 @@ def print_card_change():
                 print('Input not accepted, try again\n')
 
 
-def print_winner(winner, winner_hand, assigned_index):
+def print_winner(assigned_index, winner, winner_hand):
     if winner == assigned_index:
         print('\nYou win')
     else:
