@@ -11,18 +11,21 @@ contract Mental_Poker {
     uint8 constant DECK_SIZE = 52;
 
     // PUBLIC GAME's INFOS
-    address[MAX_PLAYERS] public players_addresses;
+    address[MAX_PLAYERS] players_addresses;
     
     uint256 public n;
     uint256[MAX_PLAYERS] enc_keys;
     uint256[MAX_PLAYERS] dec_keys;
     
     uint8[DECK_SIZE] deck_coding;
-    uint256[DECK_SIZE][MAX_PLAYERS] public shuffle_steps;
-    
-    uint256[DECK_SIZE][MAX_PLAYERS] public revealed_cards;
-    uint8[DECK_SIZE] public cards_owner;
-
+    /* keeps track of the shuffle steps so that the result can be verified */
+    uint256[DECK_SIZE][MAX_PLAYERS] shuffle_steps;
+    /* keeps track of drawing and revealing steps so that they can be verified */
+    uint256[DECK_SIZE][MAX_PLAYERS] revealed_cards;
+    /* cards_owner[i] = j means that the i-th card belongs to the j-th player
+     * this vector is used to reconstruct hands on the client side and manage card change */
+    uint8[DECK_SIZE] cards_owner;
+    /* contains the results calculated by every client */
     uint8[MAX_PLAYERS] verify_results;
 
 
@@ -35,8 +38,8 @@ contract Mental_Poker {
 
 
     // DRAW PHASE VARIABLES //
-    /* while 'turn_index' indicates which player should decrypt a card, 
-     * 'draw_index' refers to the player that will draw the card that is being revealed */
+    /* 'draw_index' refers to the player that will draw the card that is being revealed
+     *  while 'turn_index' indicates which player should decrypt a card to reveal it */
     uint8 public draw_index;
     /* since the deck is securely shuffled, drawing from the top is perfectly secure
      * 'topdeck_index' points to the next card that will be drawn */
@@ -45,7 +48,7 @@ contract Mental_Poker {
 
     // STAKE PHASE VARIABLES //
     /* keeps track of the last player that placed a bet in order to set an end to the stake loop */
-    uint8 last_raise_index;
+    uint8 public last_raise_index;
     /* tracks the bets placed */
     uint256[MAX_PLAYERS] bets;
     /* fold_flags[i] = true when player i folds, false instead */
@@ -94,7 +97,9 @@ contract Mental_Poker {
 
         for (uint8 i; i<MAX_PLAYERS; i++)
             verify_results[i] = MAX_PLAYERS;
-                }
+        
+        pot = PARTICIPATION_FEE;
+    }
 
     /* for debugging sake */
     function reset() public {
@@ -127,44 +132,43 @@ contract Mental_Poker {
         turn_index = 0;
         draw_index = 0;
         topdeck_index = 0;
-        
         last_raise_index = 0;
 
-        pot = 0;
+        pot = PARTICIPATION_FEE;
 
         output = 0;
     }
 
     function next() private {
         if (status == Status.matchmaking) {
-            // If there are enough players game can start
+            /* if there are enough players game can start */
             if (players_addresses[players_addresses.length-1] != address(0)) {
-                pot = PARTICIPATION_FEE;
-
                 status = Status.shuffle;
                 emit shuffle_event(turn_index);
             }
         }
+
         else if (status == Status.shuffle) {
-            // Shuffle is always performed starting from player 0 and ending with player n-1
+            /* shuffle is always performed starting from player 0 and ending with player n-1 */
             turn_index += 1;
             if (turn_index >= MAX_PLAYERS) {
                 status = Status.draw_card_1;
-                draw_index = 0;
+                /* since draw_index = 0, turn index = 1 */
                 turn_index = 1;
                 emit draw_event(turn_index, draw_index, topdeck_index, HAND_SIZE);
             }
-            else {
+            else
                 emit shuffle_event(turn_index);
-            }
         }
+
         else if (status == Status.draw_card_1) {
+            /* if client has drawn */
             if (turn_index == draw_index) {
                 topdeck_index += HAND_SIZE;
                 draw_index += 1;
+                /* if every client has drawn */
                 if (draw_index >= MAX_PLAYERS) {
                     status = Status.stake_1;
-                    //last_raise_index = 0;
                     turn_index = 0;
                     emit stake_event(turn_index);
                 }
@@ -173,32 +177,38 @@ contract Mental_Poker {
                     emit draw_event(turn_index, draw_index, topdeck_index, HAND_SIZE); 
                 }
             }
+            /* if client has decrypted */
             else {
                 turn_index = (turn_index + 1) % MAX_PLAYERS;
                 emit draw_event(turn_index, draw_index, topdeck_index, HAND_SIZE); 
             }
         }
+
         else if (status == Status.stake_1) {
             turn_index = (turn_index + 1) % MAX_PLAYERS;
 
+            /* if the stake round hasnt been completed yet */
             if (turn_index != last_raise_index) {
+                /* if client has folded we skip to the next client */
                 if (fold_flags[turn_index])
                     next();
                 else {
                     bool is_only_one_player_left = true;
                     for (uint8 i; i<MAX_PLAYERS; i++) {
-                        if (i != turn_index && fold_flags[i] == false) {
+                        if (i != turn_index && !fold_flags[i]) {
                             is_only_one_player_left = false;
                             break;
                         }
                     }
 
                     if (is_only_one_player_left) {
+                        /* pot updated and bets reset */
                         for (uint8 i; i<MAX_PLAYERS; i++) {
                             pot += bets[i];
                             bets[i] = 0;
                         }
 
+                        /* skip to the key_reveal phase */
                         emit stake_event(MAX_PLAYERS);
                         status = Status.card_change;
                         emit card_change_event(MAX_PLAYERS);
@@ -211,33 +221,41 @@ contract Mental_Poker {
                         emit stake_event(turn_index);
                 }
             }
+            /* if the stake round has been completed */
             else {
+                /* pot updated and bets reset */
                 for (uint8 i; i<MAX_PLAYERS; i++) {
                     pot += bets[i];
                     bets[i] = 0;
                 }
                 
                 emit stake_event(MAX_PLAYERS);
+
                 status = Status.card_change;
                 emit card_change_event(turn_index);
             }
         }
+
         else if (status == Status.card_change) {
             turn_index = (turn_index + 1) % MAX_PLAYERS;
 
+            /* if card_change phase is over */
             if (turn_index == last_raise_index) {    
                 emit card_change_event(MAX_PLAYERS);
 
+                /* finding the first player that has to draw, if there is any
+                 * (excluding players that have folded and player who didnt change any cards) */
                 uint8 num_cards;
                 bool someone_has_to_draw;
                 for (uint8 i; i<MAX_PLAYERS; i++) {
-                    if (fold_flags[i] == false && number_of_changed_cards[i] > 0) {
+                    if (!fold_flags[i] && number_of_changed_cards[i] > 0) {
                         draw_index = i;
                         turn_index = (draw_index + 1) % MAX_PLAYERS;
                         someone_has_to_draw = true;
                         break; 
                     }
                 }
+                
                 if (someone_has_to_draw) {
                     num_cards = number_of_changed_cards[draw_index];
                     status = Status.draw_card_2;
@@ -250,6 +268,7 @@ contract Mental_Poker {
                     emit stake_event(turn_index);
                 }
             }
+            /* if card_change phase isnt over yet */
             else {
                 if (fold_flags[turn_index])
                     next();
@@ -257,14 +276,18 @@ contract Mental_Poker {
                     emit card_change_event(turn_index);
             }
         }
+
         else if (status == Status.draw_card_2) {
+            /* if client has drawn */
             if (turn_index == draw_index) {
                 topdeck_index += number_of_changed_cards[draw_index];
 
+                /* finding the next player that has to draw, if there is any
+                 * (excluding players that have folded and player who didnt change any cards) */
                 uint8 num_cards;
                 bool someone_has_to_draw;
                 for (uint8 i=draw_index+1; i<MAX_PLAYERS; i++) {
-                    if (fold_flags[i] == false && number_of_changed_cards[i] > 0) {
+                    if (!fold_flags[i] && number_of_changed_cards[i] > 0) {
                         draw_index = i;
                         turn_index = (draw_index + 1) % MAX_PLAYERS;
                         someone_has_to_draw = true;
@@ -283,27 +306,32 @@ contract Mental_Poker {
                     emit stake_event(turn_index);
                 }
             }
+            /* if client has decrypted */
             else {
                 turn_index = (turn_index + 1) % MAX_PLAYERS;
                 emit draw_event(turn_index, draw_index, topdeck_index, number_of_changed_cards[draw_index]); 
             }
         }
+
         else if (status == Status.stake_2) {
             turn_index = (turn_index + 1) % MAX_PLAYERS;
 
+            /* if the stake round hasnt been completed yet */
             if (turn_index != last_raise_index) {
+                /* if client has folded we skip to the next client */
                 if (fold_flags[turn_index])
                     next();
                 else {
                     bool is_only_one_player_left = true;
                     for (uint8 i; i<MAX_PLAYERS; i++) {
-                        if (i != turn_index && fold_flags[i] == false) {
+                        if (i != turn_index && !fold_flags[i]) {
                             is_only_one_player_left = false;
                             break;
                         }
                     }
 
                     if (is_only_one_player_left) {
+                        /* pot updated */
                         for (uint8 i; i<MAX_PLAYERS; i++)
                             pot += bets[i];
                         
@@ -315,16 +343,20 @@ contract Mental_Poker {
                         emit stake_event(turn_index);
                 }
             }
+            /* if the stake round has been completed */
             else {
                 for (uint8 i; i<MAX_PLAYERS; i++)
                     pot += bets[i];
 
                 emit stake_event(MAX_PLAYERS);
+
                 status = Status.key_reveal;
                 emit key_reveal_event();
             }
         }
+
         else if (status == Status.key_reveal) {
+            /* does nothing if some player still has to communicate its keys */
             for (uint8 i; i<MAX_PLAYERS; i++) {
                 if (enc_keys[i] == 0 || dec_keys[i] == 0) {
                     return;
@@ -334,26 +366,26 @@ contract Mental_Poker {
             status = Status.optimistic_verify;
             emit optimistic_verify_event();
         }
+
         else if (status == Status.optimistic_verify) {
-            // Checking if every client has communicated his result
+            /* does nothing if some player still has to communicate its result */
             for (uint8 i; i<verify_results.length; i++) {
                 if (verify_results[i] == MAX_PLAYERS) {
                     return;
                 }
             }
             
-            // Checking if all results match
-            /*for (uint8 i; i<verify_results.length; i++) {
+            /* Checking if all results match */
+            uint8 winner_index = verify_results[0];
+            for (uint8 i=1; i<verify_results.length; i++) {
                 if (verify_results[i] != winner_index) {
-                    //da cambiare(?)
                     status = Status.pay_to_verify;
                     emit pay_to_verify_event();
                     return;
                 }
-            }*/
+            }
 
-            //payable(players_addresses[winner_index]).transfer(winnings + PARTICIPATION_FEE);
-            payable(players_addresses[verify_results[0]]).transfer(pot);
+            payable(players_addresses[winner_index]).transfer(pot);
             emit award_event();
         }
     }
@@ -369,6 +401,8 @@ contract Mental_Poker {
         }
 
         for (uint i; i<MAX_PLAYERS; i++) {
+            require(players_addresses[i] != msg.sender);
+            
             if (players_addresses[i] == address(0)) {
                 players_addresses[i] = msg.sender;
                 break;
@@ -379,7 +413,6 @@ contract Mental_Poker {
     }
 
     function get_my_turn_index() public view returns(uint8) {
-        //require(players_addresses.length > 0);
         
         uint8 index = MAX_PLAYERS;
         for (uint8 i; i<players_addresses.length; i++) {
@@ -419,19 +452,30 @@ contract Mental_Poker {
         next();
     }
 
+    /* reconstructs the deck so that 
+     * the data structure used to correctly verify the game execution
+     * are completly trasparent to the client */
     function get_deck() public view returns (uint256[DECK_SIZE] memory) {
+        /* during the shuffle steps only non dealer clients need to get access to the deck
+         * (which is generated by the previous client encryption) */
         if (status == Status.shuffle && turn_index > 0)
             return shuffle_steps[turn_index-1];
 
         uint256[DECK_SIZE] memory deck;
 
+        /* during the shuffle steps */
         if (status == Status.draw_card_1 || status == Status.draw_card_2) {
             for (uint8 i; i<DECK_SIZE; i++) {
+                /* if no one owns the card its most recent version is in the last shuffle step */
                 if (cards_owner[i] == MAX_PLAYERS)
                     deck[i] = shuffle_steps[MAX_PLAYERS-1][i];
                 else {
+                    /* if no client has decrypted the card yet
+                     * its most recent version is in the last shuffle step */
                     if (turn_index == (draw_index + 1) % MAX_PLAYERS)
                         deck[i] = shuffle_steps[MAX_PLAYERS-1][topdeck_index+i];
+                    /* if the card has already been decrypted
+                     * its most recent version is in revealed_cards */
                     else {
                         uint8 prev_index;
                         if (turn_index == 0)
@@ -446,6 +490,8 @@ contract Mental_Poker {
             return deck;
         }
 
+        /* In every other phase of the game the deck can be reconstructed
+         * simply by using the cards_owner vector */
         for (uint8 i; i<DECK_SIZE; i++) {
             if (cards_owner[i] == MAX_PLAYERS)
                 deck[i] = shuffle_steps[MAX_PLAYERS-1][i];
@@ -561,6 +607,8 @@ contract Mental_Poker {
     function key_reveal(uint256 e, uint256 d) public {
         require(status == Status.key_reveal);
         
+        /* since this phase doesnt involve the use of turn_index
+         * this checks if the client is one of the partecipants */
         uint8 index = MAX_PLAYERS;
         for (uint8 i; i<players_addresses.length; i++) {
             if (players_addresses[i] == msg.sender) {
@@ -570,6 +618,7 @@ contract Mental_Poker {
         }
         require(index != MAX_PLAYERS);
         
+        /* checks if this client has already submitted its result */
         require(enc_keys[index] == 0);
         require(dec_keys[index] == 0);
 
@@ -582,6 +631,8 @@ contract Mental_Poker {
     function optimistic_verify(uint8 winner_index) public {
         require(status == Status.optimistic_verify);
 
+        /* since this phase doesnt involve the use of turn_index
+         * this checks if the client is one of the partecipants */
         uint8 index = MAX_PLAYERS;
         for (uint8 i; i<players_addresses.length; i++) {
             if (players_addresses[i] == msg.sender) {
@@ -591,6 +642,7 @@ contract Mental_Poker {
         }
         require(index != MAX_PLAYERS);
         
+        /* checks if this client has already submitted its result */
         require(verify_results[index] == MAX_PLAYERS);
 
         verify_results[index] = winner_index;
@@ -608,18 +660,12 @@ contract Mental_Poker {
         asks for verify fees
      */ 
 
-    function report_n(uint256 divisor) public view {
+    function report_n() public view {
         // check status
 
         //skip_to_verify()
 
-        if (n % divisor == 0) {
-            // refund everyone except dealer
-            return;
-        } else {
-            // refund everyone expect client who reported
-            return;
-        }
+        // check bit dimension
     }
 
     function report_deck_coding(uint8 index) public {
@@ -634,7 +680,7 @@ contract Mental_Poker {
         
         bytes32 len = bytes32(uint256(32));
         bytes memory base = abi.encodePacked(deck_coding[index]);
-        bytes memory exp  = abi.encodePacked((n - 1) / 2);         // INTEGER DIVISON ?
+        bytes memory exp  = abi.encodePacked(uint256((n - 1) / 2));         // INTEGER DIVISON ?
         bytes memory mod  = abi.encodePacked(n);
 
         uint256 result = modular_exponentiation(len, len, len, base, exp, mod);
@@ -651,7 +697,7 @@ contract Mental_Poker {
     function report_e_and_d(uint8 player_index, uint256 proof) public {
         // check status
 
-        //skip_to_verify()
+        // skip_to_verify()
 
         // proof encryption
         bytes32 len = bytes32(uint256(32));
@@ -685,7 +731,7 @@ contract Mental_Poker {
 
         //skip_to_verify()
         
-        uint256[52] memory deck;
+        uint256[DECK_SIZE] memory deck;
     
         bytes32 len = bytes32(uint256(32));
         bytes memory base;
@@ -696,7 +742,7 @@ contract Mental_Poker {
             deck[i] = deck_coding[i];
 
         for (uint8 player_index; player_index<MAX_PLAYERS; player_index++) {
-            for (uint8 card_index; card_index<52; card_index++) {
+            for (uint8 card_index; card_index<DECK_SIZE; card_index++) {
                 base = abi.encodePacked(deck[card_index]);
                 exp  = abi.encodePacked(enc_keys[player_index]);
                 mod  = abi.encodePacked(n);
@@ -704,7 +750,7 @@ contract Mental_Poker {
                 deck[card_index] = modular_exponentiation(len, len, len, base, exp, mod);
 
                 bool flag = false;
-                for (uint8 deck_index; deck_index<52; deck_index++) {
+                for (uint8 deck_index; deck_index<DECK_SIZE; deck_index++) {
                     if (deck[card_index] == shuffle_steps[player_index][deck_index]) {
                         flag = true;
                         break;
