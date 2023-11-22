@@ -179,4 +179,4 @@ def print_winner(assigned_index, winner, winner_hand):
         print('\nYou win')
     else:
         print(f'\nWinner: {winner}')
-    print(hand_ranking_dict[winner_hand[0]])
+    print(hand_ranking_dict[winner_hand])

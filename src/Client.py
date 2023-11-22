@@ -48,7 +48,7 @@ def calculate_next_turn(turn_index, fold_flags, max_players):
         return new_turn_index
 
 def generate_deck_encryption(n):
-    # Choosing only quadratic residues to map the cards to represent the deck
+    # choosing only quadratic residues to map the cards to represent the deck
     deck_coding = []
     deck_size = 52
     count = 0
@@ -140,12 +140,12 @@ def deal_cards(assigned_index, max_players, n, d, deck_map):
 
         hand = [sra_decrypt(card, d, n) for card in encrypted_hand]
 
-        # If client has to draw
+        # if client has to draw
         if draw_index == assigned_index:
             player_hand = [deck_map[card] for card in hand]
             cch.draw()
 
-        # If someone else has to draw
+        # if someone else has to draw
         else:
             cch.reveal_cards(hand)
         
@@ -237,7 +237,7 @@ def deal_replacement_cards(assigned_index, max_players, n, d, deck_map):
 
         deck = cch.get_deck()
 
-        # If client has to draw
+        # if client has to draw
         if draw_index == assigned_index:
             hand_size = cch.get_hand_size()
             cards_owner = cch.get_cards_owner()
@@ -252,7 +252,7 @@ def deal_replacement_cards(assigned_index, max_players, n, d, deck_map):
 
             cch.draw()
         
-        # If someone else has to draw
+        # if someone else has to draw
         else:
             encrypted_cards = deck[topdeck_index : (topdeck_index + num_cards)]
             cards = [sra_decrypt(card, d, n) for card in encrypted_cards]
@@ -273,7 +273,6 @@ def verify(assigned_index, max_players, deck_map):
     if DEBUG: print('Listening for verify events')
     cch.catch_optimistic_verify_event()
 
-    # Determine winner
     hand_size = cch.get_hand_size()
     keys = cch.get_dec_keys()
     fold_flags = cch.get_fold_flags()
@@ -281,9 +280,7 @@ def verify(assigned_index, max_players, deck_map):
 
     for i in range(max_players):
         for j in range(hand_size):
-            for k in range(max_players):
-                if i == k: #remove
-                    hands[i][j] = deck_map[sra_decrypt(hands[i][j], keys[k], n)]
+            hands[i][j] = deck_map[sra_decrypt(hands[i][j], keys[i], n)]
         
         if i == assigned_index:
             print('\nYour hand:')
@@ -291,25 +288,26 @@ def verify(assigned_index, max_players, deck_map):
             print(f'\nPlayer {i}\'s hand:')
         
         print_hand(hands[i])
-
+    
+    # determine winner
     winner = None
     best_hand = None
+    best_card1 = None
+    best_card2 = None
     for i in range(max_players):
         if not fold_flags[i]:
-            evaluated_hand = evaluate_hand(hands[i])
-        
-            if best_hand is None or evaluated_hand[0].value > best_hand[0].value:
-                best_hand = evaluated_hand
+            evaluated_hand, card1, card2 = evaluate_hand(hands[i])
+
+            if best_hand is None or evaluated_hand.value > best_hand.value:
                 winner = i
-            elif evaluated_hand[0] == best_hand[0]:
-                # if hand rank is equal, compare value of cards 
-                higher_valued_hand = compare_ordered_hands(best_hand[1], evaluated_hand[1])
-                if higher_valued_hand == evaluated_hand[1]:
+                best_hand = evaluated_hand
+                best_card1 = card1
+                best_card2 = card2
+            elif best_hand == evaluated_hand:
+                if same_hand_ranking_result(winner, i, best_hand, best_card1, best_card2, card1, card2) == i:
                     winner = i
-                    best_hand = evaluated_hand
-                elif higher_valued_hand == None:
-                    winner == None
-                    best_hand = None
+                    best_card1 = card1
+                    best_card2 = card2
 
     if DEBUG: print(f'\nYour winner: {winner}')
 
@@ -340,10 +338,10 @@ if __name__ == '__main__':
     if DEBUG: print('Assigned index:', assigned_index)
     print('Waiting for other players...')
 
-    # If client is dealer he has to choose n and generate deck coding
+    # if client is dealer he has to choose n and generate deck coding
     if assigned_index == 0:
         n, e, d, deck_map = shuffle_dealer(assigned_index)
-    # If client is not dealer (he reads n and deck coding)
+    # if client is not dealer (he reads n and deck coding)
     else:
         n, e, d, deck_map = shuffle(assigned_index)
     

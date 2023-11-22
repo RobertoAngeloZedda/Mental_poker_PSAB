@@ -10,7 +10,6 @@ class Hand_Ranking(Enum):
     FULLHOUSE = 6
     FOUROFAKIND = 7
     STRAIGHTFLUSH = 8
-    ROYALFLUSH = 9
 
 hand_ranking_dict = {
     Hand_Ranking.HIGHCARD: 'High Card',
@@ -22,168 +21,160 @@ hand_ranking_dict = {
     Hand_Ranking.FULLHOUSE: 'Full House', 
     Hand_Ranking.FOUROFAKIND: 'Four of a Kind', 
     Hand_Ranking.STRAIGHTFLUSH: 'Straight Flush', 
-    Hand_Ranking.ROYALFLUSH: 'Royal Flush', 
 }
 
-def is_royal_flush(hand):
-    return is_straight_flush(hand) and (hand[0].rank == Rank.ACE or hand[4].rank == Rank.ACE)
-
-def is_straight_flush(hand):
-    return is_straight(hand) and is_flush(hand)
-
-def is_four_of_a_kind(hand): #hand needs to be sorted
-    return hand[0].rank == hand[3].rank or hand[1].rank == hand[4].rank
-
-def is_full_house(hand): #hand needs to be sorted
-    return (hand[0].rank == hand[2].rank and hand[3].rank == hand[4].rank) or (hand[2].rank == hand[4].rank and hand[0].rank == hand[1].rank)
-    
-def is_flush(hand):
-    return all(card.suit == hand[0].suit for card in hand)
-
-def is_straight(hand):
-    return all(hand[i].rank.value - hand[i+1].rank.value == 1 for i in range(len(hand) - 1)) or all(hand[i].rank.value - hand[i+1].rank.value == -1 for i in range(len(hand) - 1))
-
-def is_three_of_a_kind(hand): #hand needs to be sorted
-    return hand[0].rank == hand[2].rank or hand[1].rank == hand[3].rank or hand[2].rank == hand[4].rank
-
-def is_two_pair(hand): #hand needs to be sorted
-    return (hand[0].rank == hand[1].rank and hand[2].rank == hand[3].rank) or (hand[0].rank == hand[1].rank and hand[3].rank == hand[4].rank) or (hand[1].rank == hand[2].rank and hand[3].rank == hand[4].rank)
-
-def is_one_pair(hand): #hand needs to be sorted
-    return any(hand[i].rank == hand[i+1].rank for i in range(len(hand) - 1))
-
-def order_four_of_a_kind_hand(hand):
-    ordered_hand = []
-    rank_counts = {rank: [] for rank in Rank}
-
-    for card in hand:
-        rank_counts[card.rank].append(card)
-    
-    for rank in Rank:
-        if len(rank_counts[rank]) == 4:
-            ordered_hand.insert(0, rank_counts[rank][0])
-            ordered_hand.insert(0, rank_counts[rank][1])
-            ordered_hand.insert(0, rank_counts[rank][2])
-            ordered_hand.insert(0, rank_counts[rank][3])
-        elif len(rank_counts[rank]) == 1:
-            ordered_hand.append(rank_counts[rank][0])
-
-    return ordered_hand
-
-def order_full_house_hand(hand):
-    ordered_hand = []
-    rank_counts = {rank: [] for rank in Rank}
-
-    for card in hand:
-        rank_counts[card.rank].append(card)
-    
-    for rank in Rank:
-        if len(rank_counts[rank]) == 3:
-            ordered_hand.insert(0, rank_counts[rank][0])
-            ordered_hand.insert(0, rank_counts[rank][1])
-            ordered_hand.insert(0, rank_counts[rank][2])
-        elif len(rank_counts[rank]) == 2:
-            ordered_hand.append(rank_counts[rank][0])
-            ordered_hand.append(rank_counts[rank][1])
-
-    return ordered_hand
-
-def order_three_of_a_kind_hand(hand):
-    ordered_hand = []
-    rank_counts = {rank: [] for rank in Rank}
-
-    for card in hand:
-        rank_counts[card.rank].append(card)
-    
-    for rank in Rank:
-        if len(rank_counts[rank]) == 3:
-            ordered_hand.insert(0, rank_counts[rank][0])
-            ordered_hand.insert(0, rank_counts[rank][1])
-            ordered_hand.insert(0, rank_counts[rank][2])
-        elif len(rank_counts[rank]) == 1:
-            ordered_hand.append(rank_counts[rank][0])
-
-    tmp = ordered_hand[3]
-    ordered_hand[3] = ordered_hand[4]
-    ordered_hand[4] = tmp
-    
-    return ordered_hand
-
-def order_two_pair_hand(hand):
-    ordered_hand = []
-    rank_counts = {rank: [] for rank in Rank}
-
-    for card in hand:
-        rank_counts[card.rank].append(card)
-
-    for rank in Rank:
-        if len(rank_counts[rank]) == 2:
-            ordered_hand.insert(0, rank_counts[rank][0])
-            ordered_hand.insert(0, rank_counts[rank][1])
-        elif len(rank_counts[rank]) == 1:
-            ordered_hand.append(rank_counts[rank][0])
-    
-    return ordered_hand
-
-def order_one_pair_hand(hand):
-    ordered_hand = []
-    rank_counts = {rank: [] for rank in Rank}
-
-    for card in hand:
-        rank_counts[card.rank].append(card)
-    
-    for rank in Rank:
-        if len(rank_counts[rank]) == 2:
-            ordered_hand.insert(0, rank_counts[rank][0])
-            ordered_hand.insert(0, rank_counts[rank][1])
-        elif len(rank_counts[rank]) == 1:
-            ordered_hand.append(rank_counts[rank][0])
-    
-    tmp = ordered_hand[2]
-    ordered_hand[2] = ordered_hand[4]
-    ordered_hand[4] = tmp
-
 def sort_hand(hand):
-    return sorted(hand, key=lambda x: x.rank.value, reverse=True)
+    return sorted(sorted(hand, key=lambda x: x.suit.value, reverse=False), key=lambda x: x.rank.value, reverse=False)
 
 def evaluate_hand(hand):
     sorted_hand = sort_hand(hand)
 
-    if is_royal_flush(hand):
-        return (Hand_Ranking.ROYALFLUSH, sorted_hand)
+    card1 = None
+    card2 = None
 
-    if is_straight_flush(hand):
-        return (Hand_Ranking.STRAIGHTFLUSH, sorted_hand)
-    
-    if is_four_of_a_kind(sorted_hand):
-        return (Hand_Ranking.FOUROFAKIND, order_four_of_a_kind_hand(sorted_hand))
-    
-    if is_full_house(sorted_hand):
-        return (Hand_Ranking.FULLHOUSE, order_full_house_hand(sorted_hand))
-    
-    if is_flush(sorted_hand):
-        return (Hand_Ranking.FLUSH, sorted_hand)
-    
-    if is_straight(hand):
-        return (Hand_Ranking.STRAIGHT, sorted_hand)
-    
-    if is_three_of_a_kind(sorted_hand):
-        return (Hand_Ranking.THREEOFAKIND, order_three_of_a_kind_hand(sorted_hand))
-    
-    if is_two_pair(sorted_hand):
-        return (Hand_Ranking.TWOPAIR, order_two_pair_hand(sorted_hand))
-    
-    if is_one_pair(sorted_hand):
-        return (Hand_Ranking.ONEPAIR, order_one_pair_hand(sorted_hand))
-    
-    return (Hand_Ranking.HIGHCARD, sorted_hand)
+    flush_flag = True
+    straight_flag = True
+    first_pair_count = 1
+    second_pair_count = 0
 
-def compare_ordered_hands(hand1, hand2):
-        if hand1 == hand2:
-            return None
+    for i in range(1, 5):
+        if flush_flag and sorted_hand[i].rank.value != sorted_hand[i-1].rank.value +1:
+            flush_flag = False
+        
+        if i == 4 and straight_flag and sorted_hand[i].rank == Rank.ACE and sorted_hand[i-1].rank == Rank.FIVE:
+            straight_flag = True
+        elif straight_flag and sorted_hand[i].suit.value != sorted_hand[i-1].suit.value:
+            straight_flag = False
+        
+        if sorted_hand[i].rank.value == sorted_hand[i-1].rank.value:
+            if second_pair_count < 1: 
+                card1 = sorted_hand[i]
+                first_pair_count += 1
+            else: 
+                card2 = sorted_hand[i]
+                second_pair_count += 1
         else:
-            for i in range(5):
-                if hand1[i].rank.value > hand2[i].rank.value:
-                    return hand1
-                if hand1[i].rank.value < hand2[i].rank.value:
-                    return hand2
+            if first_pair_count > 1 and second_pair_count == 0:
+                second_pair_count = 1
+    
+    if first_pair_count == 1: card1 = sorted_hand[4]
+    
+    if first_pair_count == 4: 
+        return (Hand_Ranking.FOUROFAKIND, card1, card2)
+    
+    elif first_pair_count == 3:
+        if second_pair_count == 2: 
+            return (Hand_Ranking.FULLHOUSE, card1, card2)
+        else: 
+            return (Hand_Ranking.THREEOFAKIND, card1, card2)
+    
+    elif first_pair_count == 2:
+        if second_pair_count == 3: 
+            return (Hand_Ranking.FULLHOUSE, card1, card2)
+        elif second_pair_count == 2: 
+            return (Hand_Ranking.TWOPAIR, card2, card1)
+        else: 
+            return (Hand_Ranking.ONEPAIR, card1, card2)
+    
+    elif flush_flag and straight_flag: return (Hand_Ranking.STRAIGHTFLUSH, card1, card2)
+    elif flush_flag: return (Hand_Ranking.FLUSH, card1, card2)
+    elif straight_flag: return (Hand_Ranking.STRAIGHT, card1, card2)
+    
+    else: return (Hand_Ranking.HIGHCARD, card1, card2)
+
+def same_hand_ranking_result(index1, index2, hand_ranking, best_card1, best_card2, card1, card2):
+    match hand_ranking:
+        case Hand_Ranking.HIGHCARD:
+            if best_card1.rank.value > card1.rank.value:
+                return index1
+            elif best_card1.rank.value < card1.rank.value:
+                return index2
+            else:
+                if best_card1.suit.value > card1.suit.value:
+                    return index1
+                elif best_card1.suit.value < card1.suit.value:
+                    return index2
+            
+        case Hand_Ranking.ONEPAIR:
+            if best_card1.rank.value > card1.rank.value:
+                return index1
+            elif best_card1.rank.value < card1.rank.value:
+                return index2
+            else:
+                if best_card1.suit.value > card1.suit.value:
+                    return index1
+                elif best_card1.suit.value < card1.suit.value:
+                    return index2
+        
+        case Hand_Ranking.TWOPAIR:
+            if best_card1.rank.value > card1.rank.value:
+                return index1
+            elif best_card1.rank.value < card1.rank.value:
+                return index2
+            else:
+                if best_card2.rank.value > card2.rank.value:
+                    return index1
+                elif best_card2.rank.value < card2.rank.value:
+                    return index2
+                else:
+                    if best_card1.suit.value > card1.suit.value:
+                        return index1
+                    elif best_card1.suit.value < card1.suit.value:
+                        return index2
+        
+        case Hand_Ranking.THREEOFAKIND:
+            if best_card1.rank.value > card1.rank.value:
+                return index1
+            elif best_card1.rank.value < card1.rank.value:
+                return index2
+            
+        case Hand_Ranking.STRAIGHT:
+            if best_card1.rank.value > card1.rank.value:
+                return index1
+            elif best_card1.rank.value < card1.rank.value:
+                return index2
+            else:
+                if best_card1.suit.value > card1.suit.value:
+                    return index1
+                elif best_card1.suit.value < card1.suit.value:
+                    return index2
+            
+        case Hand_Ranking.FLUSH:
+            if best_card1.suit.value > card1.suit.value:
+                return index1
+            elif best_card1.suit.value < card1.suit.value:
+                return index2
+            else:
+                if best_card1.rank.value > card1.rank.value:
+                    return index1
+                elif best_card1.rank.value < card1.rank.value:
+                    return index2
+        
+        case Hand_Ranking.FULLHOUSE:
+            if best_card1.rank.value > card1.rank.value:
+                return index1
+            elif best_card1.rank.value < card1.rank.value:
+                return index2
+        
+        case Hand_Ranking.FOUROFAKIND:
+            if best_card1.rank.value > card1.rank.value:
+                return index1
+            elif best_card1.rank.value < card1.rank.value:
+                return index2
+        
+        case Hand_Ranking.STRAIGHTFLUSH:    
+            if best_card1.suit.value > card1.suit.value:
+                return index1
+            elif best_card1.suit.value < card1.suit.value:
+                return index2
+            else:
+                if best_card1.rank.value > card1.rank.value:
+                    return index1
+                elif best_card1.rank.value < card1.rank.value:
+                    return index2
+                
+        case Hand_Ranking.ROYALFLUSH:
+            if best_card1.suit.value > card1.suit.value:
+                return index1
+            elif best_card1.suit.value < card1.suit.value:
+                return index2
