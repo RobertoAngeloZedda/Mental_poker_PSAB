@@ -38,13 +38,13 @@ def evaluate_hand(hand):
     second_pair_count = 0
 
     for i in range(1, 5):
-        if flush_flag and sorted_hand[i].rank.value != sorted_hand[i-1].rank.value +1:
-            flush_flag = False
-        
         if i == 4 and straight_flag and sorted_hand[i].rank == Rank.ACE and sorted_hand[i-1].rank == Rank.FIVE:
             straight_flag = True
-        elif straight_flag and sorted_hand[i].suit.value != sorted_hand[i-1].suit.value:
+        elif straight_flag and sorted_hand[i].rank.value != sorted_hand[i-1].rank.value +1:
             straight_flag = False
+        
+        if flush_flag and sorted_hand[i].suit.value != sorted_hand[i-1].suit.value:
+            flush_flag = False
         
         if sorted_hand[i].rank.value == sorted_hand[i-1].rank.value:
             if second_pair_count < 1: 
@@ -172,9 +172,3 @@ def same_hand_ranking_result(index1, index2, hand_ranking, best_card1, best_card
                     return index1
                 elif best_card1.rank.value < card1.rank.value:
                     return index2
-                
-        case Hand_Ranking.ROYALFLUSH:
-            if best_card1.suit.value > card1.suit.value:
-                return index1
-            elif best_card1.suit.value < card1.suit.value:
-                return index2
