@@ -4,6 +4,7 @@ from SRA import *
 from UI import *
 import random
 
+N_BITS = 256
 DEBUG = False
 
 def get_wallet_info():
@@ -82,7 +83,7 @@ def shuffle_dealer(assigned_index):
     if DEBUG: print('Listening for shuffle events')
     cch.catch_shuffle_event(assigned_index)
 
-    n = sra_setup(16)
+    n = sra_setup(N_BITS)
     if DEBUG: print('n =', n)
 
     deck_coding = generate_deck_encryption(n)
@@ -106,10 +107,20 @@ def shuffle(assigned_index):
     cch.catch_shuffle_event(assigned_index)
 
     n = cch.get_n()
+    # checking if n lenght is appropriate
+    if n < 2**(N_BITS-2):
+        cch.report_n()
+    
     if DEBUG: print('n =', n)
 
     deck_coding = cch.get_deck_coding()
-    # CHECK
+    # checking if deck_coding is valid
+    if len(deck_coding) != 52:
+        cch.report_deck_coding(52)
+    for index, code in enumerate(deck_coding):
+        if is_quadratic_residue(code, n) != 1:
+            cch.report_deck_coding(index)
+    
     deck_map = {key: value for key, value in zip(deck_coding, [Card(suit, rank) for suit in Suit for rank in Rank])}
     if DEBUG: print('deck coding =\n', deck_coding)
 
@@ -134,6 +145,10 @@ def deal_cards(assigned_index, max_players, n, d, deck_map):
         if DEBUG: print('Listening for draw events')
         draw_index, topdeck_index, hand_size = cch.catch_draw_event(assigned_index)
 
+        # the contract communicates the phase is over when num_cards = 0
+        if hand_size == 0:
+            break
+
         deck = cch.get_deck()
 
         encrypted_hand = deck[topdeck_index : (topdeck_index + hand_size)]
@@ -142,7 +157,14 @@ def deal_cards(assigned_index, max_players, n, d, deck_map):
 
         # if client has to draw
         if draw_index == assigned_index:
-            player_hand = [deck_map[card] for card in hand]
+            # reading and checking if cards drawn are valid
+            player_hand = []
+            for card_coding in hand:
+                if card_coding in deck_map:
+                    player_hand.append(deck_map[card_coding])
+                else:
+                    cch.report_draw()
+
             cch.draw()
 
         # if someone else has to draw
@@ -242,11 +264,16 @@ def deal_replacement_cards(assigned_index, max_players, n, d, deck_map):
             hand_size = cch.get_hand_size()
             cards_owner = cch.get_cards_owner()
 
-            # recreate player's hand
+            # recreating player's hand and checking if cards are valid
             new_hand = []
             for card_index, owner in enumerate(cards_owner):
                 if owner == assigned_index:
-                    new_hand.append(deck_map[sra_decrypt(deck[card_index], d, n)])
+                    card_coding = sra_decrypt(deck[card_index], d, n)
+                    if card_coding in deck_map:
+                        new_hand.append(deck_map[card_coding])
+                    else:
+                        cch.report_draw()
+                    
                     if len(new_hand) == hand_size:
                         break
 
@@ -277,6 +304,13 @@ def verify(assigned_index, max_players, deck_map):
     keys = cch.get_dec_keys()
     fold_flags = cch.get_fold_flags()
     hands = calculate_hands(max_players)
+    
+    # testing each player's key to check if they are legitimate
+    for i in range(max_players):
+        if i != assigned_index:
+            random_num = random.randrange(stop=N_BITS)
+            if sra_decrypt(sra_encrypt(random_num, e, n), d, n) != random_num:
+                cch.report_e_and_d(i)
 
     for i in range(max_players):
         for j in range(hand_size):

@@ -1,7 +1,8 @@
 from Crypto.Util import number
+from Crypto.Random import random
 
 def sra_setup(bits: int):
-    return number.getPrime(bits)
+    return number.getPrime(bits, random.randrange(start=2**(bits-2), stop=2**bits))
 
 def sra_generate_key(phi: int):
     e = number.getPrime(phi.bit_length() - 1)
