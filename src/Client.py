@@ -306,7 +306,7 @@ def verify(assigned_index, max_players, deck_map):
     # testing each player's key to check if they are legitimate
     for i in range(max_players):
         if i != assigned_index:
-            random_num = random.randrange(stop=N_BITS)
+            random_num = random.randrange(N_BITS)
             if sra_decrypt(sra_encrypt(random_num, e, n), d, n) != random_num:
                 cch.report_e_and_d(i)
 
