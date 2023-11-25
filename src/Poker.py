@@ -172,3 +172,26 @@ def same_hand_ranking_result(index1, index2, hand_ranking, best_card1, best_card
                     return index1
                 elif best_card1.rank.value < card1.rank.value:
                     return index2
+
+def hand_results(hands, fold_flags, max_players):
+    winner = None
+    best_hand = None
+    best_card1 = None
+    best_card2 = None
+    
+    for i in range(max_players):
+        if not fold_flags[i]:
+            evaluated_hand, card1, card2 = evaluate_hand(hands[i])
+
+            if best_hand is None or evaluated_hand.value > best_hand.value:
+                winner = i
+                best_hand = evaluated_hand
+                best_card1 = card1
+                best_card2 = card2
+            elif best_hand == evaluated_hand:
+                if same_hand_ranking_result(winner, i, best_hand, best_card1, best_card2, card1, card2) == i:
+                    winner = i
+                    best_card1 = card1
+                    best_card2 = card2
+    
+    return winner, best_hand

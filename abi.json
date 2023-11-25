@@ -62,7 +62,14 @@
 	},
 	{
 		"anonymous": false,
-		"inputs": [],
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "result",
+				"type": "uint8"
+			}
+		],
 		"name": "optimistic_verify_event",
 		"type": "event"
 	},
@@ -97,6 +104,19 @@
 		],
 		"name": "stake_event",
 		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "DEPOSIT",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
 	},
 	{
 		"inputs": [],
@@ -407,6 +427,13 @@
 	},
 	{
 		"inputs": [],
+		"name": "pay_to_verify",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "pot",
 		"outputs": [
 			{
@@ -468,6 +495,19 @@
 		"name": "report_shuffle",
 		"outputs": [],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "reporter_index",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{

@@ -87,7 +87,7 @@ def shuffle_dealer(assigned_index):
     if DEBUG: print('n =', n)
 
     deck_coding = generate_deck_encryption(n)
-    deck_map = {key: value for key, value in zip(deck_coding, [Card(suit, rank) for suit in Suit for rank in Rank])}
+    deck_map = {key: value for key, value in zip(deck_coding, [Card(suit, rank) for rank in Rank for suit in Suit])}
     if DEBUG: print('deck coding =\n', deck_coding)
 
     e, d = sra_generate_key(n-1)
@@ -121,7 +121,7 @@ def shuffle(assigned_index):
         if is_quadratic_residue(code, n) != 1:
             cch.report_deck_coding(index)
     
-    deck_map = {key: value for key, value in zip(deck_coding, [Card(suit, rank) for suit in Suit for rank in Rank])}
+    deck_map = {key: value for key, value in zip(deck_coding, [Card(suit, rank) for rank in Rank for suit in Suit])}
     if DEBUG: print('deck coding =\n', deck_coding)
 
     deck = cch.get_deck()
@@ -247,8 +247,6 @@ def card_change(max_players):
 def deal_replacement_cards(assigned_index, max_players, n, d, deck_map):
     new_hand = player_hand
     
-    if DEBUG: print('Deal cards')
-
     for _ in range(max_players):
         if DEBUG: print('Listening for draw events')
         draw_index, topdeck_index, num_cards = cch.catch_draw_event(assigned_index)
@@ -324,24 +322,7 @@ def verify(assigned_index, max_players, deck_map):
         print_hand(hands[i])
     
     # determine winner
-    winner = None
-    best_hand = None
-    best_card1 = None
-    best_card2 = None
-    for i in range(max_players):
-        if not fold_flags[i]:
-            evaluated_hand, card1, card2 = evaluate_hand(hands[i])
-
-            if best_hand is None or evaluated_hand.value > best_hand.value:
-                winner = i
-                best_hand = evaluated_hand
-                best_card1 = card1
-                best_card2 = card2
-            elif best_hand == evaluated_hand:
-                if same_hand_ranking_result(winner, i, best_hand, best_card1, best_card2, card1, card2) == i:
-                    winner = i
-                    best_card1 = card1
-                    best_card2 = card2
+    winner, best_hand = hand_results(hands, fold_flags, max_players)
 
     if DEBUG: print(f'\nYour winner: {winner}')
 

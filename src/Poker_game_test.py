@@ -11,7 +11,7 @@ p7 = Player('p7')
 p8 = Player('p8')
 players = [p1, p2, p3, p4, p5, p6, p7, p8]
 
-deck = [Card(suit, rank) for suit in Suit for rank in Rank]
+deck = [Card(suit, rank) for rank in Rank for suit in Suit]
 random.shuffle(deck)
 
 game = Poker_game(players, deck)

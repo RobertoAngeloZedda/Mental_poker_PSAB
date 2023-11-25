@@ -757,9 +757,10 @@ contract Mental_Poker {
             for (uint8 i; i<MAX_PLAYERS; i++)
                 if (!has_paid[i])
                     return;
-
+/*
             status = Status.verify;
             emit verify_event();
+*/
         }
     }
 
@@ -788,7 +789,7 @@ contract Mental_Poker {
     }
 
     function report_n() public view {
-        require (status == Status.verify);
+        require (status == Status.optimistic_verify);
 
         /* checking if the client is one of the partecipants */
         uint8 index = MAX_PLAYERS;
@@ -805,7 +806,7 @@ contract Mental_Poker {
     }
 
     function report_deck_coding(uint8 index) public {
-        require (status == Status.verify);
+        require (status == Status.optimistic_verify);
 
         /* checking if the client is one of the partecipants */
         uint8 index2 = MAX_PLAYERS;
@@ -840,7 +841,7 @@ contract Mental_Poker {
     }
 
     function report_e_and_d(uint8 player_index, uint256 proof) public {
-        require (status == Status.verify);
+        require (status == Status.optimistic_verify);
 
         /* checking if the client is one of the partecipants */
         uint8 index2 = MAX_PLAYERS;
@@ -972,6 +973,188 @@ contract Mental_Poker {
         // refund everyone expect client who reported
         output = 2;
         return;
+    }
+
+    function get_rank_from_card_index(uint8 card_index) private pure returns(uint8) {
+        return uint8(card_index / 4) + 2;
+    }
+    
+    function get_suit_from_card_index(uint8 card_index) private pure returns(uint8) {
+        return card_index % 4;
+    }
+    
+    function calculate_hand(uint8 index) private view returns(uint8[HAND_SIZE] memory) {
+        uint8[HAND_SIZE] memory hand;
+
+        uint8 cards_count;
+        for (uint8 i; i<DECK_SIZE; i++) {
+            uint8 player_index = cards_owner[i];
+            if (player_index == index) {
+                hand[cards_count] = i;
+                cards_count += 1;
+                if (cards_count == HAND_SIZE)
+                    break;
+            }
+        }
+
+        return hand;
+    }
+
+    function sort_hand(uint8[HAND_SIZE] memory hand) private pure returns(uint8[HAND_SIZE] memory) {
+        /* insertion sort, sorts in ascending order based on card rank and then card suit */
+        for (uint8 i=1; i<HAND_SIZE; i++) {
+            uint8 previous_card = hand[i];
+            uint8 j = i-1;
+
+            while (j >= 0 && (hand[j] > get_rank_from_card_index(previous_card)) || 
+                             (hand[j] == get_rank_from_card_index(previous_card) && hand[j] > get_suit_from_card_index(previous_card))) {
+                hand[j+1] = hand[j];
+                j--;
+            }
+
+            hand[j+1] = previous_card;
+        }
+
+        return hand;
+    }
+
+    function evaluate_hand(uint8[HAND_SIZE] memory hand) private pure returns(uint8, uint8, uint8) {
+        uint8[HAND_SIZE] memory sorted_hand = sort_hand(hand);
+
+        uint8 card1;
+        uint8 card2;
+
+        bool flush_flag = true;
+        bool straight_flag = true;
+        uint8 first_pair_count = 1;
+        uint8 second_pair_count = 0;
+
+        for (uint8 i=1; i<5; i++) {
+            if (i == 4 && straight_flag && get_rank_from_card_index(sorted_hand[i]) == 14 && get_rank_from_card_index(sorted_hand[i-1]) == 5)
+                straight_flag = true;
+            else if (straight_flag && get_rank_from_card_index(sorted_hand[i]) != get_rank_from_card_index(sorted_hand[i-1]) + 1)
+                straight_flag = false;
+
+            if (flush_flag && get_rank_from_card_index(sorted_hand[i]) != get_rank_from_card_index(sorted_hand[i-1]))
+                flush_flag = false;
+
+            if (get_rank_from_card_index(sorted_hand[i]) == get_rank_from_card_index(sorted_hand[i-1])) {
+                if (second_pair_count < 1) {
+                    card1 = sorted_hand[i];
+                    first_pair_count += 1;
+                }
+                else {
+                    card2 = sorted_hand[i];
+                    second_pair_count += 1;
+                }
+            }
+            else if (first_pair_count > 1 && second_pair_count == 0)
+                second_pair_count = 1;
+        }
+
+        if (first_pair_count == 1)
+            card1 = sorted_hand[4];
+        
+        if (first_pair_count == 4)
+            return (7, card1, card2);
+        
+        if (first_pair_count == 3) {
+            if (second_pair_count == 2)
+                return (6, card1, card2);
+            else
+                return (3, card1, card2);
+        }
+        
+        if (first_pair_count == 2) {
+            if (second_pair_count == 3)
+                return (6, card1, card2);
+            if (second_pair_count == 2)
+                return (2, card2, card1);
+            else
+                return (1, card1, card2);
+        }
+        
+        if (flush_flag && straight_flag)
+            return (8, card1, card2);
+        
+        if (flush_flag)
+            return (5, card1, card2);
+        
+        if (straight_flag)
+            return (4, card1, card2); 
+        else
+            return (0, card1, card2);
+    }
+
+    function same_hand_ranking_result(uint8 index1, uint8 index2, uint8 hand_ranking, uint8 best_card1, uint8 best_card2, uint8 card1, uint8 card2) private pure returns(uint8) {
+        uint8 winner;
+
+        if (hand_ranking == 0 || hand_ranking == 1 || hand_ranking == 4 || hand_ranking == 3 || hand_ranking == 6 || hand_ranking == 7) {
+            if (get_rank_from_card_index(best_card1) > get_rank_from_card_index(card1))
+                winner = index1;
+            else if (get_rank_from_card_index(best_card1) < get_rank_from_card_index(card1))
+                winner = index2;
+            else if (get_suit_from_card_index(card1) > get_suit_from_card_index(card1))
+                winner = index1;
+            else if (get_suit_from_card_index(card1) < get_suit_from_card_index(card1))
+                winner = index2;
+        }
+        else if (hand_ranking == 2) {
+            if (get_rank_from_card_index(best_card1) > get_rank_from_card_index(card1))
+                winner = index1;
+            else if (get_rank_from_card_index(best_card1) < get_rank_from_card_index(card1))
+                winner = index2;
+            else if (get_rank_from_card_index(best_card2) > get_rank_from_card_index(card2))
+                winner = index1;
+            else if (get_rank_from_card_index(best_card2) < get_rank_from_card_index(card2))
+                winner = index2;
+            else if (get_suit_from_card_index(best_card1) > get_suit_from_card_index(card1))
+                winner = index1;
+            else if (get_suit_from_card_index(best_card1) < get_suit_from_card_index(card1))
+                winner = index2;
+        }
+        else if (hand_ranking == 5 || hand_ranking == 8) {
+            if (get_suit_from_card_index(best_card1) > get_suit_from_card_index(card1))
+                winner = index1;
+            else if (get_suit_from_card_index(best_card1) < get_suit_from_card_index(card1))
+                winner = index2;
+            else if (get_rank_from_card_index(best_card1) > get_rank_from_card_index(card1))
+                winner = index1;
+            else if (get_rank_from_card_index(best_card1) < get_rank_from_card_index(card1))
+                winner = index2;
+        }
+
+        return winner;
+    }
+    
+    function hand_results() private view returns(uint8) {
+        uint8 winner = MAX_PLAYERS;
+        uint8 best_hand = MAX_PLAYERS;
+        uint8 best_card1;
+        uint8 best_card2;
+        
+        for (uint8 i; i<MAX_PLAYERS; i++) {
+            if (!fold_flags[i]) {
+                uint8[HAND_SIZE] memory hand = calculate_hand(i);
+                (uint8 evaluated_hand, uint8 card1, uint8 card2) = evaluate_hand(hand);
+
+                if (best_hand == MAX_PLAYERS || evaluated_hand > best_hand) {
+                    winner = i;
+                    best_hand = evaluated_hand;
+                    best_card1 = card1;
+                    best_card2 = card2;
+                }
+                else if (best_hand == evaluated_hand) {
+                    if (same_hand_ranking_result(winner, i, best_hand, best_card1, best_card2, card1, card2) == i) {
+                        winner = i;
+                        best_card1 = card1;
+                        best_card2 = card2;
+                    }
+                }
+            }
+        }
+        
+        return winner;
     }
 
     //function report_game_result() public {}
