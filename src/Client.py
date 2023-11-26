@@ -191,12 +191,12 @@ def stake_round(assigned_index, max_players, phase):
         print_bets(assigned_index, max_players, last_raise_index, bets, fold_flags, phase)
         if phase == 2:
             print_number_of_changed_cards(max_players, cch.get_number_of_changed_cards())
-            print_pot(cch.get_pot() - cch.get_participation_fee())
+            print_pot(cch.get_pot())
 
         # when stake phase is over 'turn_index = max_players'
         if turn_index >= max_players:
             if phase == 1:
-                print_pot(cch.get_pot() - cch.get_participation_fee())
+                print_pot(cch.get_pot())
             break
         
         # if it's this client's turn
@@ -325,9 +325,12 @@ def verify(assigned_index, max_players, deck_map):
     winner, best_hand = hand_results(hands, fold_flags, max_players)
 
     if DEBUG: print(f'\nYour winner: {winner}')
-
+    
     cch.optimistic_verify(winner)
 
+    if DEBUG: print('Listening for verify events')
+    cch.catch_optimistic_verify_event()
+    
     return (winner, best_hand)
 
 def award(assigned_index, winner, winner_hand):
@@ -345,10 +348,10 @@ if __name__ == '__main__':
                                      user_wallet_password=wallet_password)
     
     max_players = cch.get_max_players()
-    participation_fee = cch.get_participation_fee()
-    if DEBUG: print('Participation fee:', participation_fee, '\nMax Players:', max_players)
+    deposit = cch.get_deposit()
+    if DEBUG: print('Deposit:', deposit, '\nMax Players:', max_players)
 
-    cch.participate(participation_fee)
+    cch.participate(deposit)
     assigned_index = cch.get_my_turn_index()
     if DEBUG: print('Assigned index:', assigned_index)
     print('Waiting for other players...')

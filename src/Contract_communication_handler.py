@@ -204,16 +204,21 @@ class Contract_communication_handler:
 		block_number = transaction['blockNumber']
 		logs = self.contract.events.optimistic_verify_event.get_logs(fromBlock=block_number)
 		if len(logs) >= 1:
-			if DEBUG: print('Past event caught (from block', block_number, '). ')
-			return
+			_result = logs[-1]['args']['result']
+
+			if DEBUG: print('Past event caught (from block', block_number, ').',
+		                    ' {result:', _result, '}')
+			return _result
 		
 		# otherwise listen for it
 		event_filter = self.contract.events.optimistic_verify_event.create_filter(fromBlock='latest')
 
 		while True:
-			for _ in event_filter.get_new_entries():
-				if DEBUG: print('New event caught.')
-				return
+			for event in event_filter.get_new_entries():
+				_result = event['args']['result']
+
+				if DEBUG: print('New event caught. {result:', _result, '}')
+				return _result
 				
 			time.sleep(1)
 	
@@ -237,9 +242,9 @@ class Contract_communication_handler:
 				
 			time.sleep(1)
 
-	def participate(self, fee):
+	def participate(self, deposit):
 		try:
-			self.last_transaction = self.contract.functions.participate().transact({'from': self.wallet_address, 'value': fee})
+			self.last_transaction = self.contract.functions.participate().transact({'from': self.wallet_address, 'value': deposit})
 		except:
 			exit('Error while calling function "participate".')
 	
@@ -267,11 +272,11 @@ class Contract_communication_handler:
 		except:
 			exit('Error while accessing attribute "HAND_SIZE".')
 	
-	def get_participation_fee(self):
+	def get_deposit(self):
 		try:
-			return self.contract.functions.PARTICIPATION_FEE().call()
+			return self.contract.functions.DEPOSIT().call()
 		except:
-			exit('Error while accessing attribute "PARTICIPATION_FEE".')
+			exit('Error while accessing attribute "DEPOSIT".')
 	
 	def get_n(self):
 		try:

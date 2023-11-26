@@ -748,7 +748,8 @@ contract Mental_Poker {
         if (status == Status.optimistic_verify) {
             emit optimistic_verify_event(2);
 
-            // AGGIUNGERE REPORT
+            status = Status.verify;
+            emit verify_event();
         }
     }
 
@@ -771,6 +772,8 @@ contract Mental_Poker {
             for (uint8 i=1; i<MAX_PLAYERS; i++)
                 payable(players_addresses[i]).transfer(DEPOSIT + bonus_refund);
         }
+
+        emit award_event();
     }
 
     function report_deck_coding(uint8 index) public {
@@ -802,6 +805,8 @@ contract Mental_Poker {
             for (uint8 i=1; i<MAX_PLAYERS; i++)
                 payable(players_addresses[i]).transfer(DEPOSIT + bonus_refund);
         }
+        
+        emit award_event();
     }
 
     function report_keys(uint8 player_index, uint256 proof) public {
@@ -838,6 +843,8 @@ contract Mental_Poker {
                 if (i != player_index)
                     payable(players_addresses[i]).transfer(DEPOSIT + bonus_refund);
         }
+        
+        emit award_event();
     }
 
     function report_shuffle() private returns(bool){
@@ -937,6 +944,8 @@ contract Mental_Poker {
         for (uint8 i; i<MAX_PLAYERS; i++)
             if (i != reporter_index)
                 payable(players_addresses[i]).transfer(DEPOSIT + bonus_refund);
+        
+        emit award_event();
     }
 
     function get_rank_from_card_index(uint8 card_index) private pure returns(uint8) {
@@ -1134,6 +1143,8 @@ contract Mental_Poker {
         for (uint8 i; i<MAX_PLAYERS; i++)
             if (verify_results[i] == winner)
                 payable(players_addresses[i]).transfer(DEPOSIT);
+        
+        emit award_event();
     }
 
     function bytes_to_int(bytes memory data) private pure returns (uint256) {

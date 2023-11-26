@@ -75,12 +75,6 @@
 	},
 	{
 		"anonymous": false,
-		"inputs": [],
-		"name": "pay_to_verify_event",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
 		"inputs": [
 			{
 				"indexed": false,
@@ -103,6 +97,12 @@
 			}
 		],
 		"name": "stake_event",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [],
+		"name": "verify_event",
 		"type": "event"
 	},
 	{
@@ -134,19 +134,6 @@
 	{
 		"inputs": [],
 		"name": "MAX_PLAYERS",
-		"outputs": [
-			{
-				"internalType": "uint8",
-				"name": "",
-				"type": "uint8"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "PARTICIPATION_FEE",
 		"outputs": [
 			{
 				"internalType": "uint8",
@@ -427,13 +414,6 @@
 	},
 	{
 		"inputs": [],
-		"name": "pay_to_verify",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
 		"name": "pot",
 		"outputs": [
 			{
@@ -466,6 +446,13 @@
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "report_game_result",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "uint8",
@@ -478,7 +465,7 @@
 				"type": "uint256"
 			}
 		],
-		"name": "report_e_and_d",
+		"name": "report_keys",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -486,13 +473,6 @@
 	{
 		"inputs": [],
 		"name": "report_n",
-		"outputs": [],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "report_shuffle",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
