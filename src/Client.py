@@ -308,7 +308,7 @@ def verify(assigned_index, max_players, deck_map):
         if i != assigned_index:
             random_num = random.randrange(N_BITS)
             if sra_decrypt(sra_encrypt(random_num, e, n), d, n) != random_num:
-                cch.report_e_and_d(i)
+                cch.report_keys(i, random_num)
 
     for i in range(max_players):
         for j in range(hand_size):
