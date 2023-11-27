@@ -95,11 +95,15 @@ contract Mental_Poker {
     constructor() {
         status = Status.matchmaking;
 
-        for (uint8 i; i<DECK_SIZE; i++)
+        for (uint8 i; i<DECK_SIZE;) {
             cards_owner[i] = MAX_PLAYERS;
+            unchecked{ ++i; }
+        }
 
-        for (uint8 i; i<MAX_PLAYERS; i++)
+        for (uint8 i; i<MAX_PLAYERS;) {
             verify_results[i] = MAX_PLAYERS;
+            unchecked{ ++i; }
+        }
 
         reporter_index = MAX_PLAYERS;
     }
@@ -108,10 +112,12 @@ contract Mental_Poker {
     function reset() public {
         status = Status.matchmaking;
 
-        for (uint8 i; i<DECK_SIZE; i++)
+        for (uint8 i; i<DECK_SIZE;) {
             cards_owner[i] = MAX_PLAYERS;
+            unchecked{ ++i; }
+        }
         
-        for (uint8 i; i<MAX_PLAYERS; i++) {
+        for (uint8 i; i<MAX_PLAYERS;) {
             players_addresses[i] = address(0);
             bets1[i] = 0;
             bets2[i] = 0;
@@ -119,18 +125,26 @@ contract Mental_Poker {
             enc_keys[i] = 0;
             dec_keys[i] = 0;
 
-            for (uint8 j; j<DECK_SIZE; j++)
+            for (uint8 j; j<DECK_SIZE;) {
                 shuffle_steps[i][j] = 0;
+                unchecked{ ++j; }
+            }
 
-            for (uint8 j; j<DECK_SIZE; j++)
+            for (uint8 j; j<DECK_SIZE;) {
                 revealed_cards[i][j] = 0;
+                unchecked{ ++j; }
+            }
             
-            for (uint8 j; j<HAND_SIZE; j++)
+            for (uint8 j; j<HAND_SIZE;) {
                 changed_cards[i][j] = false;
+                unchecked{ ++j; }
+            }
             
             number_of_changed_cards[i] = 0;
 
             verify_results[i] = MAX_PLAYERS;
+            
+            unchecked{ ++i; }
         }
 
         turn_index = 0;
@@ -154,7 +168,7 @@ contract Mental_Poker {
 
         else if (status == Status.shuffle) {
             /* shuffle is always performed starting from player 0 and ending with player n-1 */
-            turn_index += 1;
+            ++turn_index;
             if (turn_index >= MAX_PLAYERS) {
                 status = Status.draw_card_1;
                 /* since draw_index = 0, turn index = 1 */
@@ -169,7 +183,7 @@ contract Mental_Poker {
             /* if client has drawn */
             if (turn_index == draw_index) {
                 topdeck_index += HAND_SIZE;
-                draw_index += 1;
+                ++draw_index;
                 /* if every client has drawn */
                 if (draw_index >= MAX_PLAYERS) {
                     status = Status.stake_1;
@@ -198,17 +212,20 @@ contract Mental_Poker {
                     next();
                 else {
                     bool is_only_one_player_left = true;
-                    for (uint8 i; i<MAX_PLAYERS; i++) {
+                    for (uint8 i; i<MAX_PLAYERS;) {
                         if (i != turn_index && !fold_flags[i]) {
                             is_only_one_player_left = false;
                             break;
                         }
+                        unchecked{ ++i; }
                     }
 
                     if (is_only_one_player_left) {
                         /* pot updated and bets reset */
-                        for (uint8 i; i<MAX_PLAYERS; i++)
+                        for (uint8 i; i<MAX_PLAYERS;) {
                             pot += bets1[i];
+                            unchecked{ ++i; }
+                        }
 
                         /* skip to the key_reveal phase */
                         emit stake_event(MAX_PLAYERS);
@@ -226,8 +243,10 @@ contract Mental_Poker {
             /* if the stake round has been completed */
             else {
                 /* pot updated and bets reset */
-                for (uint8 i; i<MAX_PLAYERS; i++)
+                for (uint8 i; i<MAX_PLAYERS;) {
                     pot += bets1[i];
+                    unchecked{ ++i; }
+                }
                 
                 emit stake_event(MAX_PLAYERS);
 
@@ -247,13 +266,14 @@ contract Mental_Poker {
                  * (excluding players that have folded and player who didnt change any cards) */
                 uint8 num_cards;
                 bool someone_has_to_draw;
-                for (uint8 i; i<MAX_PLAYERS; i++) {
+                for (uint8 i; i<MAX_PLAYERS;) {
                     if (!fold_flags[i] && number_of_changed_cards[i] > 0) {
                         draw_index = i;
                         turn_index = (draw_index + 1) % MAX_PLAYERS;
                         someone_has_to_draw = true;
                         break; 
                     }
+                    unchecked{ ++i; }
                 }
                 
                 if (someone_has_to_draw) {
@@ -286,13 +306,14 @@ contract Mental_Poker {
                  * (excluding players that have folded and player who didnt change any cards) */
                 uint8 num_cards;
                 bool someone_has_to_draw;
-                for (uint8 i=draw_index+1; i<MAX_PLAYERS; i++) {
+                for (uint8 i=draw_index+1; i<MAX_PLAYERS;) {
                     if (!fold_flags[i] && number_of_changed_cards[i] > 0) {
                         draw_index = i;
                         turn_index = (draw_index + 1) % MAX_PLAYERS;
                         someone_has_to_draw = true;
                         break; 
                     }
+                    unchecked{ ++i; }
                 }
 
                 if (someone_has_to_draw)
@@ -323,17 +344,20 @@ contract Mental_Poker {
                     next();
                 else {
                     bool is_only_one_player_left = true;
-                    for (uint8 i; i<MAX_PLAYERS; i++) {
+                    for (uint8 i; i<MAX_PLAYERS;) {
                         if (i != turn_index && !fold_flags[i]) {
                             is_only_one_player_left = false;
                             break;
                         }
+                        unchecked{ ++i; }
                     }
 
                     if (is_only_one_player_left) {
                         /* pot updated */
-                        for (uint8 i; i<MAX_PLAYERS; i++)
+                        for (uint8 i; i<MAX_PLAYERS;) {
                             pot += bets2[i];
+                            unchecked{ ++i; }
+                        }
                         
                         emit stake_event(MAX_PLAYERS);
                         status = Status.key_reveal;
@@ -345,8 +369,10 @@ contract Mental_Poker {
             }
             /* if the stake round has been completed */
             else {
-                for (uint8 i; i<MAX_PLAYERS; i++)
+                for (uint8 i; i<MAX_PLAYERS;) {
                     pot += bets2[i];
+                    unchecked{ ++i; }
+                }
 
                 emit stake_event(MAX_PLAYERS);
 
@@ -357,9 +383,11 @@ contract Mental_Poker {
 
         else if (status == Status.key_reveal) {
             /* does nothing if some player still has to communicate its keys */
-            for (uint8 i; i<MAX_PLAYERS; i++)
+            for (uint8 i; i<MAX_PLAYERS;) {
                 if (enc_keys[i] == 0 || dec_keys[i] == 0)
                     return;
+                unchecked{ ++i; }
+            }
 
             status = Status.optimistic_verify;
             emit optimistic_verify_event(0);
@@ -367,27 +395,28 @@ contract Mental_Poker {
             if (reporter_index != MAX_PLAYERS) {
                 emit optimistic_verify_event(2);
 
-                for (uint8 i; i<players_addresses.length; i++) {
+                for (uint8 i; i<players_addresses.length;) {
                     if (players_addresses[i] == msg.sender) {
                         check_draw(i);
                         emit award_event();
                         break;
                     }
+                    unchecked{ ++i; }
                 }
             }
         }
 
         else if (status == Status.optimistic_verify) {
             /* does nothing if some player still has to communicate its result */
-            for (uint8 i; i<verify_results.length; i++) {
-                if (verify_results[i] == MAX_PLAYERS) {
+            for (uint8 i; i<verify_results.length;) {
+                if (verify_results[i] == MAX_PLAYERS)
                     return;
-                }
+                unchecked{ ++i; }
             }
             
             /* Checking if all results match */
             uint8 winner_index = verify_results[0];
-            for (uint8 i=1; i<verify_results.length; i++) {
+            for (uint8 i=1; i<verify_results.length;) {
                 if (verify_results[i] != winner_index) {
 
                     emit optimistic_verify_event(2);
@@ -398,11 +427,14 @@ contract Mental_Poker {
                     emit award_event();
                     return;
                 }
+                unchecked{ ++i; }
             }
 
             payable(players_addresses[winner_index]).transfer(pot);
-            for (uint8 i; i<MAX_PLAYERS; i++)
+            for (uint8 i; i<MAX_PLAYERS;) {
                 payable(players_addresses[i]).transfer(DEPOSIT);
+                unchecked{ ++i; }
+            }
             emit optimistic_verify_event(1);
             emit award_event();
         }
@@ -418,13 +450,14 @@ contract Mental_Poker {
             payable(msg.sender).transfer(msg.value - DEPOSIT);
         }
 
-        for (uint i; i<MAX_PLAYERS; i++) {
+        for (uint i; i<MAX_PLAYERS;) {
             require(players_addresses[i] != msg.sender);
             
             if (players_addresses[i] == address(0)) {
                 players_addresses[i] = msg.sender;
                 break;
             }
+            unchecked{ ++i; }
         }
 
         next();
@@ -433,11 +466,12 @@ contract Mental_Poker {
     function get_my_turn_index() public view returns(uint8) {
         
         uint8 index = MAX_PLAYERS;
-        for (uint8 i; i<players_addresses.length; i++) {
+        for (uint8 i; i<players_addresses.length;) {
             if (players_addresses[i] == msg.sender) {
                 index = i;
                 break;
             }
+            unchecked{ ++i; }
         }
         
         require(index < MAX_PLAYERS);
@@ -454,9 +488,11 @@ contract Mental_Poker {
 
         n = _n;
 
-        for (uint8 i=1; i<DECK_SIZE; i++)
+        for (uint8 i=1; i<DECK_SIZE;) {
             if (_deck_coding[i-1] >= _deck_coding[i])
                 require(false);
+            unchecked{ ++i; }
+        }
 
         deck_coding = _deck_coding;
 
@@ -487,7 +523,7 @@ contract Mental_Poker {
 
         /* during the shuffle steps */
         if (status == Status.draw_card_1 || status == Status.draw_card_2) {
-            for (uint8 i; i<DECK_SIZE; i++) {
+            for (uint8 i; i<DECK_SIZE;) {
                 /* if no one owns the card its most recent version is in the last shuffle step */
                 if (cards_owner[i] == MAX_PLAYERS)
                     deck[i] = shuffle_steps[MAX_PLAYERS-1][i];
@@ -508,13 +544,14 @@ contract Mental_Poker {
                         deck[i] = revealed_cards[prev_index][i];
                     }
                 }
+                unchecked{ ++i; }
             }
             return deck;
         }
 
         /* In every other phase of the game the deck can be reconstructed
          * simply by using the cards_owner vector */
-        for (uint8 i; i<DECK_SIZE; i++) {
+        for (uint8 i; i<DECK_SIZE;) {
             if (cards_owner[i] == MAX_PLAYERS)
                 deck[i] = shuffle_steps[MAX_PLAYERS-1][i];
             else {
@@ -526,6 +563,7 @@ contract Mental_Poker {
 
                 deck[i] = revealed_cards[prev_index][i];
             }
+            unchecked{ ++i; }
         }
 
         return deck;
@@ -538,9 +576,10 @@ contract Mental_Poker {
         require(turn_index != draw_index);
         require(msg.sender == players_addresses[turn_index]);
 
-        for (uint8 i; i<decripted_cards.length; i++) {
+        for (uint8 i; i<decripted_cards.length;) {
             revealed_cards[turn_index][topdeck_index + i] = decripted_cards[i];
             cards_owner[topdeck_index+i] = draw_index;
+            unchecked{ ++i; }
         }
 
         next();
@@ -638,12 +677,13 @@ contract Mental_Poker {
         require(msg.sender == players_addresses[turn_index]);
         require(cards_to_change.length == HAND_SIZE);
         
-        for (uint8 i; i<HAND_SIZE; i++) {
+        for (uint8 i; i<HAND_SIZE;) {
             if (cards_to_change[i]) {
                 changed_cards[turn_index][i] = true;
-                number_of_changed_cards[turn_index]++;
+                ++number_of_changed_cards[turn_index];
                 cards_owner[turn_index * HAND_SIZE + i] = MAX_PLAYERS;
             }
+            unchecked{ ++i; }
         }
         
         require(number_of_changed_cards[turn_index] < HAND_SIZE);
@@ -661,11 +701,12 @@ contract Mental_Poker {
         /* since this phase doesnt involve the use of turn_index
          * this checks if the client is one of the partecipants */
         uint8 index = MAX_PLAYERS;
-        for (uint8 i; i<players_addresses.length; i++) {
+        for (uint8 i; i<players_addresses.length;) {
             if (players_addresses[i] == msg.sender) {
                 index = i;
                 break;
             }
+            unchecked{ ++i; }
         }
         require(index != MAX_PLAYERS);
         
@@ -685,11 +726,12 @@ contract Mental_Poker {
         /* since this phase doesnt involve the use of turn_index
          * this checks if the client is one of the partecipants */
         uint8 index = MAX_PLAYERS;
-        for (uint8 i; i<players_addresses.length; i++) {
+        for (uint8 i; i<players_addresses.length;) {
             if (players_addresses[i] == msg.sender) {
                 index = i;
                 break;
             }
+            unchecked{ ++i; }
         }
         require(index != MAX_PLAYERS);
         
@@ -706,19 +748,21 @@ contract Mental_Poker {
     function report_n() public {
         uint256 gas_left = gasleft();
 
-        require (reporter_index != MAX_PLAYERS);
+        require (reporter_index == MAX_PLAYERS);
         require (status == Status.shuffle);
 
         /* checking if the client is one of the partecipants */
-        for (uint8 i; i<players_addresses.length; i++) {
+        for (uint8 i; i<players_addresses.length;) {
             if (players_addresses[i] == msg.sender) {
                 reporter_index = i;
                 break;
             }
+            unchecked{ ++i; }  
         }
         require(reporter_index < MAX_PLAYERS);
         
         emit shuffle_event(MAX_PLAYERS);
+        emit draw_event(0, 0, 0, 0);
 
         // we save the two leftmost bits of n
         uint8 result = uint8(n >> 254);
@@ -728,14 +772,18 @@ contract Mental_Poker {
         if (result > 0) {
             // refund everyone expect client who reported
             bonus_refund = (bets1[reporter_index] + bets2[reporter_index]) / (MAX_PLAYERS - 1);
-            for (uint8 i; i<MAX_PLAYERS; i++)
+            for (uint8 i; i<MAX_PLAYERS;) {
                 if (i != reporter_index)
                     payable(players_addresses[i]).transfer(DEPOSIT + bonus_refund);
+                unchecked{ ++i; }
+            }
         } else {
             // refund everyone expect dealer
             bonus_refund = (bets1[0] + bets2[0]) / (MAX_PLAYERS - 1);
-            for (uint8 i=1; i<MAX_PLAYERS; i++)
+            for (uint8 i=1; i<MAX_PLAYERS;) {
                 payable(players_addresses[i]).transfer(DEPOSIT + bonus_refund);
+                unchecked{ ++i; }
+            }
             payable (players_addresses[reporter_index]).transfer(gas_left - gasleft());
         }
 
@@ -745,15 +793,16 @@ contract Mental_Poker {
     function report_deck_coding(uint8 index) public {
         uint256 gas_left = gasleft();
 
-        require (reporter_index != MAX_PLAYERS);
+        require (reporter_index == MAX_PLAYERS);
         require (status == Status.shuffle);
 
         /* checking if the client is one of the partecipants */
-        for (uint8 i; i<players_addresses.length; i++) {
+        for (uint8 i; i<players_addresses.length;) {
             if (players_addresses[i] == msg.sender) {
                 reporter_index = i;
                 break;
             }
+            unchecked{ ++i; }
         }
         require(reporter_index < MAX_PLAYERS);
         
@@ -764,8 +813,10 @@ contract Mental_Poker {
         if (deck_coding[index] % n == 0 || deck_coding[index] == 1) {
             // refund everyone except dealer
             bonus_refund = (bets1[0] + bets2[0]) / (MAX_PLAYERS - 1);
-            for (uint8 i=1; i<MAX_PLAYERS; i++)
+            for (uint8 i=1; i<MAX_PLAYERS;) {
                 payable(players_addresses[i]).transfer(DEPOSIT + bonus_refund);
+                unchecked{ ++i; }
+            }                
             payable (players_addresses[reporter_index]).transfer(gas_left - gasleft());
 
             emit award_event();
@@ -782,14 +833,18 @@ contract Mental_Poker {
         if (result == 1) {
             // refund everyone expect client who reported
             bonus_refund = (bets1[reporter_index] + bets2[reporter_index]) / (MAX_PLAYERS - 1);
-            for (uint8 i; i<MAX_PLAYERS; i++)
+            for (uint8 i; i<MAX_PLAYERS;) {
                 if (i != reporter_index)
                     payable(players_addresses[i]).transfer(DEPOSIT + bonus_refund);
+                unchecked{ ++i; }
+            }
         } else {
             // refund everyone except dealer
             bonus_refund = (bets1[0] + bets2[0]) / (MAX_PLAYERS - 1);
-            for (uint8 i=1; i<MAX_PLAYERS; i++)
+            for (uint8 i=1; i<MAX_PLAYERS;) {
                 payable(players_addresses[i]).transfer(DEPOSIT + bonus_refund);
+                unchecked{ ++i; }
+            }
             payable (players_addresses[reporter_index]).transfer(gas_left - gasleft());
         }
         
@@ -799,15 +854,16 @@ contract Mental_Poker {
     function report_keys(uint8 player_index, uint256 proof) public {
         uint256 gas_left = gasleft();
 
-        require (reporter_index != MAX_PLAYERS);
+        require (reporter_index == MAX_PLAYERS);
         require (status == Status.optimistic_verify);
 
         /* checking if the client is one of the partecipants */
-        for (uint8 i; i<players_addresses.length; i++) {
+        for (uint8 i; i<players_addresses.length;) {
             if (players_addresses[i] == msg.sender) {
                 reporter_index = i;
                 break;
             }
+            unchecked{ ++i; }
         }
         require(reporter_index < MAX_PLAYERS);
 
@@ -830,15 +886,19 @@ contract Mental_Poker {
         if (result == proof) {
             // refund everyone expect client who reported
             bonus_refund = (bets1[reporter_index] + bets2[reporter_index]) / (MAX_PLAYERS - 1);
-            for (uint8 i; i<MAX_PLAYERS; i++)
+            for (uint8 i; i<MAX_PLAYERS;) {
                 if (i != reporter_index)
                     payable(players_addresses[i]).transfer(DEPOSIT + bets1[i] + bets2[i] + bonus_refund);
+                unchecked{ ++i; }
+            }
         } else {
             // refund everyone except player_index
             bonus_refund = (bets1[player_index] + bets2[player_index]) / (MAX_PLAYERS - 1);
-            for (uint8 i; i<MAX_PLAYERS; i++)
+            for (uint8 i; i<MAX_PLAYERS;) {
                 if (i != player_index)
                     payable(players_addresses[i]).transfer(DEPOSIT + bets1[i] + bets2[i] + bonus_refund);
+                unchecked{ ++i; }
+            }
             payable (players_addresses[reporter_index]).transfer(gas_left - gasleft());
         }
         
@@ -856,8 +916,10 @@ contract Mental_Poker {
         bytes memory mod;
 
         // initializing the deck we'll work with
-        for (uint8 i; i<deck_coding.length; i++)
+        for (uint8 i; i<deck_coding.length;) {
             deck[i] = deck_coding[i];
+            unchecked{ ++i; }
+        }
 
         for (uint8 player_index; player_index<MAX_PLAYERS; player_index++) {
             for (uint8 card_index; card_index<DECK_SIZE; card_index++) {
@@ -878,9 +940,11 @@ contract Mental_Poker {
                 if (!flag) {
                     // refund everyone expect client "player index"
                     uint256 bonus_refund = (bets1[player_index] + bets2[player_index]) / (MAX_PLAYERS - 1);
-                    for (uint8 i; i<MAX_PLAYERS; i++)
+                    for (uint8 i; i<MAX_PLAYERS;) {
                         if (i != player_index)
                             payable(players_addresses[i]).transfer(DEPOSIT + bets1[i] + bets2[i] + bonus_refund);
+                        unchecked{ ++i; }
+                    }
                     if (caller_index != player_index)
                         payable (players_addresses[reporter_index]).transfer(gas_left - gasleft());
 
@@ -931,9 +995,11 @@ contract Mental_Poker {
                 if (revealed_cards[player_index][card_index] != deck[card_index]) {
                     // refund everyone expect client "player index"
                     bonus_refund = (bets1[player_index] + bets2[player_index]) / (MAX_PLAYERS - 1);
-                    for (uint8 i; i<MAX_PLAYERS; i++)
+                    for (uint8 i; i<MAX_PLAYERS;) {
                         if (i != player_index)
                             payable(players_addresses[i]).transfer(DEPOSIT + bets1[i] + bets2[i] + bonus_refund);
+                        unchecked{ ++i; }
+                    }
                     if (caller_index != player_index)
                         payable (players_addresses[caller_index]).transfer(gas_left - gasleft());
                     
@@ -944,24 +1010,26 @@ contract Mental_Poker {
         
         // refund everyone expect client who reported
         bonus_refund = (bets1[reporter_index] + bets2[reporter_index]) / (MAX_PLAYERS - 1);
-        for (uint8 i; i<MAX_PLAYERS; i++)
+        for (uint8 i; i<MAX_PLAYERS;) {
             if (i != reporter_index)
                 payable(players_addresses[i]).transfer(DEPOSIT + bets1[i] + bets2[i] + bonus_refund);
-        
+            unchecked{ ++i; }
+        }
         if (caller_index != reporter_index)
             payable (players_addresses[caller_index]).transfer(gas_left - gasleft());
     }
 
     function report_draw() public {
-        require (reporter_index != MAX_PLAYERS);
+        require (reporter_index == MAX_PLAYERS);
         require (status == Status.draw_card_1 || status == Status.draw_card_2);
 
         /* checking if the client is one of the partecipants */
-        for (uint8 i; i<players_addresses.length; i++) {
+        for (uint8 i; i<players_addresses.length;) {
             if (players_addresses[i] == msg.sender) {
                 reporter_index = i;
                 break;
             }
+            unchecked{ ++i; }
         }
         require(reporter_index < MAX_PLAYERS);
         
@@ -987,16 +1055,20 @@ contract Mental_Poker {
 
 
     function get_rank(uint8 card) private view returns(uint8) {
-        for (uint8 i; i<DECK_SIZE; i++)
+        for (uint8 i; i<DECK_SIZE;) {
             if (deck_coding[i] == card)
                 return uint8(i / 4) + 2;
+            unchecked{ ++i; }
+        }
         return 0;
     }
     
     function get_suit(uint8 card) private view returns(uint8) {
-        for (uint8 i; i<DECK_SIZE; i++)
+        for (uint8 i; i<DECK_SIZE;) {
             if (deck_coding[i] == card)
                 return i % 4;
+            unchecked{ ++i; }
+        }
         return 0;
     }
     
@@ -1011,7 +1083,7 @@ contract Mental_Poker {
         bytes memory mod;
 
         uint8 cards_count;
-        for (uint8 i; i<DECK_SIZE; i++) {
+        for (uint8 i; i<DECK_SIZE;) {
             uint8 player_index = cards_owner[i];
             if (player_index == index) {
                 base = abi.encodePacked(deck[i]);
@@ -1020,10 +1092,11 @@ contract Mental_Poker {
 
                 hand[cards_count] = uint8(modular_exponentiation(len, len, len, base, exp, mod));
 
-                cards_count += 1;
+                ++cards_count;
                 if (cards_count == HAND_SIZE)
                     break;
             }
+            unchecked{ ++i; }
         }
 
         return hand;
@@ -1032,14 +1105,18 @@ contract Mental_Poker {
     function sort_hand(uint8[HAND_SIZE] memory hand) private pure returns(uint8[HAND_SIZE] memory) {
         uint8 min;
         uint8 aux;
-        for (uint8 i; i<HAND_SIZE-1; i++) {
+        for (uint8 i; i<HAND_SIZE-1;) {
             min = i;
-            for (uint8 j=i+1; j<HAND_SIZE; j++)
+            for (uint8 j=i+1; j<HAND_SIZE;) {
                 if (hand[j] < hand[min])
                     min = j;
+                unchecked{ ++j; }
+            }
             aux = hand[min];
             hand[min] = hand[i];
             hand[i] = aux;
+
+            unchecked{ ++i; }
         }
 
         return hand;
@@ -1056,7 +1133,7 @@ contract Mental_Poker {
         uint8 first_pair_count = 1;
         uint8 second_pair_count = 0;
 
-        for (uint8 i=1; i<5; i++) {
+        for (uint8 i=1; i<5;) {
             if (i == 4 && straight_flag && get_rank(sorted_hand[i]) == 14 && get_rank(sorted_hand[i-1]) == 5)
                 straight_flag = true;
             else if (straight_flag && get_rank(sorted_hand[i]) != get_rank(sorted_hand[i-1]) + 1)
@@ -1068,15 +1145,17 @@ contract Mental_Poker {
             if (get_rank(sorted_hand[i]) == get_rank(sorted_hand[i-1])) {
                 if (second_pair_count < 1) {
                     card1 = sorted_hand[i];
-                    first_pair_count += 1;
+                    ++first_pair_count;
                 }
                 else {
                     card2 = sorted_hand[i];
-                    second_pair_count += 1;
+                    ++second_pair_count;
                 }
             }
             else if (first_pair_count > 1 && second_pair_count == 0)
                 second_pair_count = 1;
+            
+            unchecked{ ++i; }
         }
 
         if (first_pair_count == 1)
@@ -1162,7 +1241,7 @@ contract Mental_Poker {
         uint8 best_card1;
         uint8 best_card2;
         
-        for (uint8 i; i<MAX_PLAYERS; i++) {
+        for (uint8 i; i<MAX_PLAYERS;) {
             if (!fold_flags[i]) {
                 uint8[HAND_SIZE] memory hand = calculate_hand(i);
                 (uint8 evaluated_hand, uint8 card1, uint8 card2) = evaluate_hand(hand);
@@ -1181,14 +1260,18 @@ contract Mental_Poker {
                     }
                 }
             }
+
+            unchecked{ ++i; }
         }
         
         /* paying the winner */
         payable(players_addresses[winner]).transfer(pot);
         /* giving back the deposit to every honest player*/
-        for (uint8 i; i<MAX_PLAYERS; i++)
+        for (uint8 i; i<MAX_PLAYERS;) {
             if (verify_results[i] == winner)
                 payable(players_addresses[i]).transfer(DEPOSIT);
+            unchecked{ ++i; }
+        }
         /* paying back the reporter the gas he spent */
         if (verify_results[reporter_index] == winner)
             payable(players_addresses[reporter_index]).transfer(gas_left - gasleft());
@@ -1197,11 +1280,12 @@ contract Mental_Poker {
     function bytes_to_int(bytes memory data) private pure returns (uint256) {
         require(data.length > 0, "Input bytes must not be empty");
 
-        uint256 result = 0;
+        uint256 result;
 
-        for (uint256 i; i<data.length; i++) {
+        for (uint256 i; i<data.length;) {
             result = result << 8; // Shift the current result to the left by 8 bits
             result = result | uint8(data[i]); // Bitwise OR to set the least significant 8 bits
+            unchecked{ ++i; }
         }
 
         return result;

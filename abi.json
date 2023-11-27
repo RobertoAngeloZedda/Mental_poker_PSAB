@@ -100,12 +100,6 @@
 		"type": "event"
 	},
 	{
-		"anonymous": false,
-		"inputs": [],
-		"name": "verify_event",
-		"type": "event"
-	},
-	{
 		"inputs": [],
 		"name": "DEPOSIT",
 		"outputs": [

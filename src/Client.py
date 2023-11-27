@@ -81,7 +81,7 @@ def calculate_hands(max_players):
 
 def shuffle_dealer(assigned_index):
     if DEBUG: print('Listening for shuffle events')
-    cch.catch_shuffle_event(assigned_index)
+    cch.catch_shuffle_event(assigned_index, max_players)
 
     n = sra_setup(N_BITS)
     if DEBUG: print('n =', n)
@@ -104,12 +104,16 @@ def shuffle_dealer(assigned_index):
 
 def shuffle(assigned_index):
     if DEBUG: print('Listening for shuffle events')
-    cch.catch_shuffle_event(assigned_index)
+    turn_index = cch.catch_shuffle_event(assigned_index, max_players)
+    
+    if turn_index >= max_players:
+        return (None, None, None, None)
 
     n = cch.get_n()
-    # checking if n lenght is appropriate
+    # checking if n length is appropriate
     if n < 2**(N_BITS-2):
         cch.report_n()
+        return (None, None, None, None)
     
     if DEBUG: print('n =', n)
 
@@ -331,10 +335,13 @@ def verify(assigned_index, max_players, deck_map):
     
     return (winner, best_hand)
 
-def award(assigned_index, winner, winner_hand):
+def award(assigned_index, winner=None, winner_hand=None):
     if DEBUG: print('Listening for award events')
     cch.catch_award_event()
-    print_winner(assigned_index, winner, winner_hand)
+    if winner is not None and winner_hand is not None:
+        print_winner(assigned_index, winner, winner_hand)
+    else:
+        print('\nANOMALY DETECTED\nContract will proceed to refund all clients')
 
 if __name__ == '__main__':
 
@@ -361,15 +368,15 @@ if __name__ == '__main__':
     else:
         n, e, d, deck_map = shuffle(assigned_index)
 
-    if cch.get_reporter_index != max_players:
-        award(assigned_index, winner_index, winner_hand)
+    if cch.get_reporter_index() != max_players:
+        award(assigned_index)
         exit()
     
     player_hand = deal_cards(assigned_index, max_players, n, d, deck_map)
 
-    if cch.get_reporter_index != max_players:
+    if cch.get_reporter_index() != max_players:
         key_reveal(e, d)
-        award(assigned_index, winner_index, winner_hand)
+        award(assigned_index)
         exit()
 
     stake_round(assigned_index, max_players, 1)
@@ -378,17 +385,17 @@ if __name__ == '__main__':
     
     player_hand = deal_replacement_cards(assigned_index, max_players, n, d, deck_map)
 
-    if cch.get_reporter_index != max_players:
+    if cch.get_reporter_index() != max_players:
         key_reveal(e, d)
-        award(assigned_index, winner_index, winner_hand)
+        award(assigned_index)
         exit()
     
     stake_round(assigned_index, max_players, 2)
 
     key_reveal(e, d)
     
-    if cch.get_reporter_index != max_players:
-        award(assigned_index, winner_index, winner_hand)
+    if cch.get_reporter_index() != max_players:
+        award(assigned_index)
         exit()
 
     (winner_index, winner_hand) = verify(assigned_index, max_players, deck_map)

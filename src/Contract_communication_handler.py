@@ -57,7 +57,7 @@ class Contract_communication_handler:
 		except:
 			exit('Error during the creation of the "Contract" object.')
 
-	def catch_shuffle_event(self, turn_index):
+	def catch_shuffle_event(self, turn_index, end_index):
 
 		# check if my last transaction triggered the event
 		transaction = self.connection.eth.get_transaction(self.last_transaction)
@@ -67,8 +67,8 @@ class Contract_communication_handler:
 			_turn_index = logs[-1]['args']['turn_index']
 
 			if DEBUG: print('Past event caught (from block', block_number, '). {turn_index:', _turn_index, '}')
-			if _turn_index == turn_index:
-				return
+			if _turn_index == turn_index or _turn_index == end_index:
+				return _turn_index
 		
 		# otherwise listen for it
 		event_filter = self.contract.events.shuffle_event.create_filter(fromBlock='latest')
@@ -78,8 +78,8 @@ class Contract_communication_handler:
 				_turn_index = event['args']['turn_index']
 
 				if DEBUG: print('New event caught. {turn_index:', _turn_index, '}')
-				if _turn_index == turn_index:
-					return
+				if _turn_index == turn_index or _turn_index == end_index:
+					return _turn_index
 				
 			time.sleep(1)
 	
@@ -403,6 +403,12 @@ class Contract_communication_handler:
 			return self.contract.functions.optimistic_verify(winner_index).transact({'from': self.wallet_address})
 		except:
 			exit('Error while calling function "optimistic_verify".')
+	
+	def get_reporter_index(self):
+		try:
+			return self.contract.functions.reporter_index().call()
+		except:
+			exit('Error while accessing attribute "reporter_index".')
 
 	def report_n(self):
 		try:
