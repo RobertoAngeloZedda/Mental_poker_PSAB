@@ -115,8 +115,6 @@ def shuffle(assigned_index):
 
     deck_coding = cch.get_deck_coding()
     # checking if deck_coding is valid
-    if len(deck_coding) != 52:
-        cch.report_deck_coding(52)
     for index, code in enumerate(deck_coding):
         if is_quadratic_residue(code, n) != 1:
             cch.report_deck_coding(index)
@@ -362,18 +360,36 @@ if __name__ == '__main__':
     # if client is not dealer (he reads n and deck coding)
     else:
         n, e, d, deck_map = shuffle(assigned_index)
+
+    if cch.get_reporter_index != max_players:
+        award(assigned_index, winner_index, winner_hand)
+        exit()
     
     player_hand = deal_cards(assigned_index, max_players, n, d, deck_map)
-    
+
+    if cch.get_reporter_index != max_players:
+        key_reveal(e, d)
+        award(assigned_index, winner_index, winner_hand)
+        exit()
+
     stake_round(assigned_index, max_players, 1)
     
     card_change(max_players)
     
     player_hand = deal_replacement_cards(assigned_index, max_players, n, d, deck_map)
+
+    if cch.get_reporter_index != max_players:
+        key_reveal(e, d)
+        award(assigned_index, winner_index, winner_hand)
+        exit()
     
     stake_round(assigned_index, max_players, 2)
 
     key_reveal(e, d)
+    
+    if cch.get_reporter_index != max_players:
+        award(assigned_index, winner_index, winner_hand)
+        exit()
 
     (winner_index, winner_hand) = verify(assigned_index, max_players, deck_map)
 

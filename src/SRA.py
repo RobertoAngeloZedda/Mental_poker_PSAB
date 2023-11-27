@@ -1,5 +1,4 @@
 from Crypto.Util import number
-from Crypto.Random import random
 
 def sra_setup(bits: int):
     n = 0

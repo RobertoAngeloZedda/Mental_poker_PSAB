@@ -403,3 +403,29 @@ class Contract_communication_handler:
 			return self.contract.functions.optimistic_verify(winner_index).transact({'from': self.wallet_address})
 		except:
 			exit('Error while calling function "optimistic_verify".')
+
+	def report_n(self):
+		try:
+			return self.contract.functions.report_n().transact({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "report_n".')
+
+	def report_deck_coding(self, index):
+		try:
+			return self.contract.functions.report_deck_coding(index).transact({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "report_deck_coding".')
+
+	def report_draw(self):
+		try:
+			return self.contract.functions.report_draw().transact({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "report_draw".')
+	
+	def report_keys(self, i, random_num):
+		try:
+			return self.contract.functions.report_keys(i, random_num).transact({'from': self.wallet_address})
+		except:
+			exit('Error while calling function "report_keys".')
+
+
