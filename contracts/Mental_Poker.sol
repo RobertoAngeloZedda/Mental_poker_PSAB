@@ -68,7 +68,6 @@ contract Mental_Poker {
 
 
     // VERIFY PHASE VARIABLES //
-    uint256 public output;
     uint8 public reporter_index;
     bool[MAX_PLAYERS] has_paid;
 
@@ -148,7 +147,6 @@ contract Mental_Poker {
         pot = 0;
 
         reporter_index = MAX_PLAYERS;
-        output = 0;
     }
 
     function next() private {
@@ -374,8 +372,11 @@ contract Mental_Poker {
             status = Status.optimistic_verify;
             emit optimistic_verify_event(0);
             
-            if (reporter_index != MAX_PLAYERS)
-                report();
+            if (reporter_index != MAX_PLAYERS) {
+                emit optimistic_verify_event(2);
+                status = Status.verify;
+                emit verify_event();
+            }
         }
 
         else if (status == Status.optimistic_verify) {
@@ -392,12 +393,13 @@ contract Mental_Poker {
                 if (verify_results[i] != winner_index) {
 
                     emit optimistic_verify_event(2);
+                    emit verify_event();
 
+                    status = Status.verify;
                     reporter_index = i;
-                    
                     report_game_result();
-
-
+                    
+                    emit award_event();
                     return;
                 }
             }
@@ -704,19 +706,14 @@ contract Mental_Poker {
     function report() private {
         require (reporter_index != MAX_PLAYERS);
 
-        if (reporter_index == MAX_PLAYERS) {
-            /* checking if the client is one of the partecipants */
-            uint8 index = MAX_PLAYERS;
-            for (uint8 i; i<players_addresses.length; i++) {
-                if (players_addresses[i] == msg.sender) {
-                    index = i;
-                    break;
-                }
+        /* checking if the client is one of the partecipants */
+        for (uint8 i; i<players_addresses.length; i++) {
+            if (players_addresses[i] == msg.sender) {
+                reporter_index = i;
+                break;
             }
-            require(index < MAX_PLAYERS);
-
-            reporter_index = index;
         }
+        require(reporter_index < MAX_PLAYERS);
 
         /* report_n and report_deck_coding arrive in this state */
         if (status == Status.shuffle)
@@ -757,7 +754,7 @@ contract Mental_Poker {
         require (status == Status.verify);
         require (players_addresses[reporter_index] == msg.sender);
 
-        
+        // still need to check n
 
         uint256 bonus_refund;
         if (true) {
@@ -948,12 +945,18 @@ contract Mental_Poker {
         emit award_event();
     }
 
-    function get_rank_from_card_index(uint8 card_index) private pure returns(uint8) {
-        return uint8(card_index / 4) + 2;
+    function get_rank(uint8 card) private view returns(uint8) {
+        for (uint8 i; i<DECK_SIZE; i++)
+            if (deck_coding[i] == card)
+                return uint8(i / 4) + 2;
+        return 0;
     }
     
-    function get_suit_from_card_index(uint8 card_index) private pure returns(uint8) {
-        return card_index % 4;
+    function get_suit(uint8 card) private view returns(uint8) {
+        for (uint8 i; i<DECK_SIZE; i++)
+            if (deck_coding[i] == card)
+                return i % 4;
+        return 0;
     }
     
     function calculate_hand(uint8 index) private returns(uint8[HAND_SIZE] memory) {
@@ -986,24 +989,22 @@ contract Mental_Poker {
     }
 
     function sort_hand(uint8[HAND_SIZE] memory hand) private pure returns(uint8[HAND_SIZE] memory) {
-        /* insertion sort, sorts in ascending order based on card rank and then card suit */
-        for (uint8 i=1; i<HAND_SIZE; i++) {
-            uint8 previous_card = hand[i];
-            uint8 j = i-1;
-
-            while (j >= 0 && (hand[j] > get_rank_from_card_index(previous_card)) || 
-                             (hand[j] == get_rank_from_card_index(previous_card) && hand[j] > get_suit_from_card_index(previous_card))) {
-                hand[j+1] = hand[j];
-                j--;
-            }
-
-            hand[j+1] = previous_card;
+        uint8 min;
+        uint8 aux;
+        for (uint8 i; i<HAND_SIZE-1; i++) {
+            min = i;
+            for (uint8 j=i+1; j<HAND_SIZE; j++)
+                if (hand[j] < hand[min])
+                    min = j;
+            aux = hand[min];
+            hand[min] = hand[i];
+            hand[i] = aux;
         }
 
         return hand;
     }
 
-    function evaluate_hand(uint8[HAND_SIZE] memory hand) private pure returns(uint8, uint8, uint8) {
+    function evaluate_hand(uint8[HAND_SIZE] memory hand) private view returns(uint8, uint8, uint8) {
         uint8[HAND_SIZE] memory sorted_hand = sort_hand(hand);
 
         uint8 card1;
@@ -1015,15 +1016,15 @@ contract Mental_Poker {
         uint8 second_pair_count = 0;
 
         for (uint8 i=1; i<5; i++) {
-            if (i == 4 && straight_flag && get_rank_from_card_index(sorted_hand[i]) == 14 && get_rank_from_card_index(sorted_hand[i-1]) == 5)
+            if (i == 4 && straight_flag && get_rank(sorted_hand[i]) == 14 && get_rank(sorted_hand[i-1]) == 5)
                 straight_flag = true;
-            else if (straight_flag && get_rank_from_card_index(sorted_hand[i]) != get_rank_from_card_index(sorted_hand[i-1]) + 1)
+            else if (straight_flag && get_rank(sorted_hand[i]) != get_rank(sorted_hand[i-1]) + 1)
                 straight_flag = false;
 
-            if (flush_flag && get_rank_from_card_index(sorted_hand[i]) != get_rank_from_card_index(sorted_hand[i-1]))
+            if (flush_flag && get_suit(sorted_hand[i]) != get_suit(sorted_hand[i-1]))
                 flush_flag = false;
 
-            if (get_rank_from_card_index(sorted_hand[i]) == get_rank_from_card_index(sorted_hand[i-1])) {
+            if (get_rank(sorted_hand[i]) == get_rank(sorted_hand[i-1])) {
                 if (second_pair_count < 1) {
                     card1 = sorted_hand[i];
                     first_pair_count += 1;
@@ -1071,41 +1072,41 @@ contract Mental_Poker {
             return (0, card1, card2);
     }
 
-    function same_hand_ranking_result(uint8 index1, uint8 index2, uint8 hand_ranking, uint8 best_card1, uint8 best_card2, uint8 card1, uint8 card2) private pure returns(uint8) {
+    function same_hand_ranking_result(uint8 index1, uint8 index2, uint8 hand_ranking, uint8 best_card1, uint8 best_card2, uint8 card1, uint8 card2) private view returns(uint8) {
         uint8 winner;
 
         if (hand_ranking == 0 || hand_ranking == 1 || hand_ranking == 4 || hand_ranking == 3 || hand_ranking == 6 || hand_ranking == 7) {
-            if (get_rank_from_card_index(best_card1) > get_rank_from_card_index(card1))
+            if (get_rank(best_card1) > get_rank(card1))
                 winner = index1;
-            else if (get_rank_from_card_index(best_card1) < get_rank_from_card_index(card1))
+            else if (get_rank(best_card1) < get_rank(card1))
                 winner = index2;
-            else if (get_suit_from_card_index(card1) > get_suit_from_card_index(card1))
+            else if (get_suit(card1) > get_suit(card1))
                 winner = index1;
-            else if (get_suit_from_card_index(card1) < get_suit_from_card_index(card1))
+            else if (get_suit(card1) < get_suit(card1))
                 winner = index2;
         }
         else if (hand_ranking == 2) {
-            if (get_rank_from_card_index(best_card1) > get_rank_from_card_index(card1))
+            if (get_rank(best_card1) > get_rank(card1))
                 winner = index1;
-            else if (get_rank_from_card_index(best_card1) < get_rank_from_card_index(card1))
+            else if (get_rank(best_card1) < get_rank(card1))
                 winner = index2;
-            else if (get_rank_from_card_index(best_card2) > get_rank_from_card_index(card2))
+            else if (get_rank(best_card2) > get_rank(card2))
                 winner = index1;
-            else if (get_rank_from_card_index(best_card2) < get_rank_from_card_index(card2))
+            else if (get_rank(best_card2) < get_rank(card2))
                 winner = index2;
-            else if (get_suit_from_card_index(best_card1) > get_suit_from_card_index(card1))
+            else if (get_suit(best_card1) > get_suit(card1))
                 winner = index1;
-            else if (get_suit_from_card_index(best_card1) < get_suit_from_card_index(card1))
+            else if (get_suit(best_card1) < get_suit(card1))
                 winner = index2;
         }
         else if (hand_ranking == 5 || hand_ranking == 8) {
-            if (get_suit_from_card_index(best_card1) > get_suit_from_card_index(card1))
+            if (get_suit(best_card1) > get_suit(card1))
                 winner = index1;
-            else if (get_suit_from_card_index(best_card1) < get_suit_from_card_index(card1))
+            else if (get_suit(best_card1) < get_suit(card1))
                 winner = index2;
-            else if (get_rank_from_card_index(best_card1) > get_rank_from_card_index(card1))
+            else if (get_rank(best_card1) > get_rank(card1))
                 winner = index1;
-            else if (get_rank_from_card_index(best_card1) < get_rank_from_card_index(card1))
+            else if (get_rank(best_card1) < get_rank(card1))
                 winner = index2;
         }
 
@@ -1113,6 +1114,11 @@ contract Mental_Poker {
     }
     
     function report_game_result() public {
+        require (status == Status.verify);
+        require (reporter_index != MAX_PLAYERS);
+
+        uint256 gas_left = gasleft();
+        
         uint8 winner = MAX_PLAYERS;
         uint8 best_hand = MAX_PLAYERS;
         uint8 best_card1;
@@ -1139,12 +1145,15 @@ contract Mental_Poker {
             }
         }
         
+        /* paying the winner */
         payable(players_addresses[winner]).transfer(pot);
+        /* giving back the deposit to every honest player*/
         for (uint8 i; i<MAX_PLAYERS; i++)
             if (verify_results[i] == winner)
                 payable(players_addresses[i]).transfer(DEPOSIT);
-        
-        emit award_event();
+        /* paying back the reporter the gas he spent */
+        if (verify_results[reporter_index] == winner)
+            payable(players_addresses[reporter_index]).transfer(gas_left - gasleft());
     }
 
     function bytes_to_int(bytes memory data) private pure returns (uint256) {
