@@ -170,6 +170,8 @@ contract Mental_Poker {
             /* shuffle is always performed starting from player 0 and ending with player n-1 */
             ++turn_index;
             if (turn_index >= MAX_PLAYERS) {
+                emit shuffle_event(MAX_PLAYERS);
+
                 status = Status.draw_card_1;
                 /* since draw_index = 0, turn index = 1 */
                 turn_index = 1;
@@ -762,7 +764,6 @@ contract Mental_Poker {
         require(reporter_index < MAX_PLAYERS);
         
         emit shuffle_event(MAX_PLAYERS);
-        emit draw_event(0, 0, 0, 0);
 
         // we save the two leftmost bits of n
         uint8 result = uint8(n >> 254);

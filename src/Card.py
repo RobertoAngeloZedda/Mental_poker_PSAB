@@ -1,10 +1,10 @@
 from enum import Enum
 
 class Suit(Enum):
-    HEARTS = 0
-    DIAMONDS = 1
-    CLUBS = 2
-    SPADES = 3
+    SPADES = 0
+    CLUBS = 1
+    DIAMONDS = 2
+    HEARTS = 3
 
 class Rank(Enum):
     TWO = 2

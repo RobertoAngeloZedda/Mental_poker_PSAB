@@ -100,6 +100,9 @@ def shuffle_dealer(assigned_index):
 
     cch.shuffle_dealer(n, deck_coding, enc)
 
+    # waiting for the shuffle phase to end
+    cch.catch_shuffle_event(max_players, max_players)
+
     return n, e, d, deck_map
 
 def shuffle(assigned_index):
@@ -137,6 +140,9 @@ def shuffle(assigned_index):
     if DEBUG: print('encrypted_deck =\n', enc)
 
     cch.shuffle(enc)
+
+    # waiting for the shuffle phase to end
+    turn_index = cch.catch_shuffle_event(max_players, max_players)
 
     return n, e, d, deck_map
 
