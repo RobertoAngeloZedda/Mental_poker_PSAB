@@ -5,7 +5,7 @@ from UI import *
 import random
 
 N_BITS = 256
-DEBUG = False
+DEBUG = True
 
 def get_wallet_info():
     wallet_address = ''
@@ -300,7 +300,9 @@ def deal_replacement_cards(assigned_index, max_players, n, d, deck_map):
 def key_reveal(e, d):
     if DEBUG: print('Listening for key reveal events')
     cch.catch_key_reveal_event()
-    cch.key_reveal(e, d)
+    cch.key_reveal(e, e)
+    #fake_e, fake_d = sra_generate_key(n-1)
+    #cch.key_reveal(fake_e, fake_d)
 
     if DEBUG: print(cch.get_enc_keys())
     if DEBUG: print(cch.get_dec_keys())
@@ -314,7 +316,7 @@ def verify(assigned_index, max_players, deck_map):
     dec_keys = cch.get_dec_keys()
     fold_flags = cch.get_fold_flags()
     hands = calculate_hands(max_players)
-
+    
     # testing each player's key to check if they are legitimate
     for i in range(max_players):
         if i != assigned_index:

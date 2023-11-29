@@ -825,7 +825,7 @@ contract Mental_Poker {
         }
         
         bytes32 len = bytes32(uint256(32));
-        bytes memory base = abi.encodePacked(deck_coding[index]);
+        bytes memory base = abi.encodePacked(uint256(deck_coding[index]));
         bytes memory exp  = abi.encodePacked(uint256((n - 1) / 2));
         bytes memory mod  = abi.encodePacked(n);
 
@@ -857,6 +857,7 @@ contract Mental_Poker {
 
         require (reporter_index == MAX_PLAYERS);
         require (status == Status.optimistic_verify);
+        require (proof != 0);
 
         /* checking if the client is one of the partecipants */
         for (uint8 i; i<players_addresses.length;) {
@@ -1003,8 +1004,6 @@ contract Mental_Poker {
                     }
                     if (caller_index != player_index)
                         payable (players_addresses[caller_index]).transfer(gas_left - gasleft());
-                    
-                    return;
                 }
             }
         }
@@ -1039,19 +1038,15 @@ contract Mental_Poker {
             emit draw_event(0, 0, 0, 0);
             emit stake_event(MAX_PLAYERS);
             emit card_change_event(MAX_PLAYERS);
-
-            status = Status.draw_card_2;
         }
 
         /* report_draw might also arrive in this state */
-        //if (status == Status.draw_card_2) {
         emit draw_event(0, 0, 0, 0);
         emit stake_event(MAX_PLAYERS);
 
         /* letting the key_reveal phase be handled by next() */
         status = Status.key_reveal;
         emit key_reveal_event();
-        return;
     }
 
 

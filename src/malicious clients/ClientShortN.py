@@ -83,7 +83,7 @@ def shuffle_dealer(assigned_index):
     if DEBUG: print('Listening for shuffle events')
     cch.catch_shuffle_event(assigned_index, max_players)
 
-    n = sra_setup(N_BITS)
+    n = 797
     if DEBUG: print('n =', n)
 
     deck_coding = generate_deck_encryption(n)
@@ -314,7 +314,7 @@ def verify(assigned_index, max_players, deck_map):
     dec_keys = cch.get_dec_keys()
     fold_flags = cch.get_fold_flags()
     hands = calculate_hands(max_players)
-
+    
     # testing each player's key to check if they are legitimate
     for i in range(max_players):
         if i != assigned_index:

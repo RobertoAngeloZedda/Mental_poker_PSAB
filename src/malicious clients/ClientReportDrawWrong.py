@@ -5,7 +5,7 @@ from UI import *
 import random
 
 N_BITS = 256
-DEBUG = False
+DEBUG = True
 
 def get_wallet_info():
     wallet_address = ''
@@ -170,8 +170,6 @@ def deal_cards(assigned_index, max_players, n, d, deck_map):
             player_hand = []
             for card_coding in hand:
                 if card_coding in deck_map:
-                    player_hand.append(deck_map[card_coding])
-                else:
                     cch.report_draw()
                     return player_hand
             
@@ -314,7 +312,7 @@ def verify(assigned_index, max_players, deck_map):
     dec_keys = cch.get_dec_keys()
     fold_flags = cch.get_fold_flags()
     hands = calculate_hands(max_players)
-
+    
     # testing each player's key to check if they are legitimate
     for i in range(max_players):
         if i != assigned_index:

@@ -5,7 +5,7 @@ from UI import *
 import random
 
 N_BITS = 256
-DEBUG = False
+DEBUG = True
 
 def get_wallet_info():
     wallet_address = ''
@@ -123,7 +123,7 @@ def shuffle(assigned_index):
     deck_coding = cch.get_deck_coding()
     # checking if deck_coding is valid
     for index, code in enumerate(deck_coding):
-        if is_quadratic_residue(code, n) != 1:
+        if is_quadratic_residue(code, n) == 1:
             cch.report_deck_coding(index)
             return (None, None, None, None)
     
@@ -314,7 +314,7 @@ def verify(assigned_index, max_players, deck_map):
     dec_keys = cch.get_dec_keys()
     fold_flags = cch.get_fold_flags()
     hands = calculate_hands(max_players)
-
+    
     # testing each player's key to check if they are legitimate
     for i in range(max_players):
         if i != assigned_index:

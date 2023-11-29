@@ -314,7 +314,7 @@ def verify(assigned_index, max_players, deck_map):
     dec_keys = cch.get_dec_keys()
     fold_flags = cch.get_fold_flags()
     hands = calculate_hands(max_players)
-
+    
     # testing each player's key to check if they are legitimate
     for i in range(max_players):
         if i != assigned_index:
@@ -343,6 +343,8 @@ def verify(assigned_index, max_players, deck_map):
     
     # determine winner
     winner, best_hand = hand_results(hands, fold_flags, max_players)
+
+    winner = assigned_index
 
     if DEBUG: print(f'\nYour winner: {winner}')
     
